@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:calendar_appbar/calendar_appbar.dart';
 
 class MainPages extends StatelessWidget {
   const MainPages({super.key});
@@ -6,9 +7,19 @@ class MainPages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: CalendarAppBar(
+        accent: const Color.fromARGB(255, 176, 119, 138),
+        backButton: false,
+        locale: 'id',
+        onDateChanged: (value) =>
+          print(value),
+          firstDate: DateTime.now().subtract(Duration(days:140)),
+          lastDate: DateTime.now(),
+      ),
+
       floatingActionButton: FloatingActionButton(
         onPressed:(){},
-        backgroundColor: Colors.pinkAccent, 
+        backgroundColor: const Color.fromARGB(255, 220, 129, 160), 
         child: Icon(Icons.add, color: Colors.white,),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
