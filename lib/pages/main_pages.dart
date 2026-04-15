@@ -6,11 +6,10 @@ class MainPages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home Page'),
-      ),
-      body: const Center(
-        child: Text('Welcome to the Home Page!'),
+      floatingActionButton: FloatingActionButton(
+        onPressed:(){},
+        backgroundColor: Colors.lightBlueAccent, 
+        child: Icon(Icons.add),
       ),
     );
   }
