@@ -6,6 +6,7 @@ class MainPages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
         onPressed:(){},
         backgroundColor: Colors.lightBlueAccent, 
