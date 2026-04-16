@@ -9,6 +9,7 @@ class HomePage extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children:[
+            Image.asset("/images/image.jpg"),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Container(
@@ -26,16 +27,19 @@ class HomePage extends StatelessWidget {
                           Text('Welcome Back'),
                         ],
                       )
-                    ]
+                  ]
                   ),
-                    ]
-                ),
-              )
-            )
-          ]
-        )
+              ]),
 
-      ),
+              width: double.infinity,
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.purpleAccent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            )
+          ),],
+        )),
     );
   }
 }
