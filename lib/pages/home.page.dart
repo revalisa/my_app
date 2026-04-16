@@ -9,7 +9,6 @@ class HomePage extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children:[
-            Image.asset("/images/image.jpg"),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Container(
