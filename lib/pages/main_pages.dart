@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:calendar_appbar/calendar_appbar.dart';
+import 'package:my_app/pages/home.page.dart';
+
 
 class MainPages extends StatelessWidget {
   const MainPages({super.key});
@@ -22,6 +24,9 @@ class MainPages extends StatelessWidget {
         backgroundColor: const Color.fromARGB(255, 220, 129, 160), 
         child: Icon(Icons.add, color: Colors.white,),
       ),
+
+      body: HomePage(),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         child: Row(
