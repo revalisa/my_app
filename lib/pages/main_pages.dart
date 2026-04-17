@@ -33,7 +33,10 @@ class _MainPagesState extends State<MainPages> {
           lastDate: DateTime.now(),
       ) : PreferredSize(
         child: Container(
-          child: Text("Category")), 
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
+            child: Text("Category"),
+          )), 
           preferredSize: Size.fromHeight(0)),
 
       floatingActionButton: FloatingActionButton(
