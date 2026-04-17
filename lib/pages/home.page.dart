@@ -94,7 +94,7 @@ class HomePage extends StatelessWidget {
 
           // transaction history
           Padding(
-            padding:  EdgeInsets.all(16),
+            padding:  EdgeInsets.all(10),
             child: Text("Transaction History", 
             style: GoogleFonts.montserrat(
                fontSize: 16, fontWeight: FontWeight.bold
