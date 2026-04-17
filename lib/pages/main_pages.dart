@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:calendar_appbar/calendar_appbar.dart';
+import 'package:my_app/pages/category_page.dart';
 import 'package:my_app/pages/home.page.dart';
 
 
-class MainPages extends StatelessWidget {
+class MainPages extends StatefulWidget {
   const MainPages({super.key});
+  
+  @override
+  State<MainPages> createState() => _MainPagesState();
+}
+
+class _MainPagesState extends State<MainPages> {
+  final List<Widget> children = [
+    HomePage(),
+    CategoryPage()
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +47,12 @@ class MainPages extends StatelessWidget {
         SizedBox(
           width: 20,
         ),
-        IconButton(onPressed:(){}, icon: Icon(Icons.list)),
+        IconButton(onPressed:(){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => CategoryPage()),
+          );
+        }, icon: Icon(Icons.list)),
       ],),),
     );
   }
