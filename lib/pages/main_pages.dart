@@ -3,7 +3,6 @@ import 'package:calendar_appbar/calendar_appbar.dart';
 import 'package:my_app/pages/category_page.dart';
 import 'package:my_app/pages/home.page.dart';
 
-
 class MainPages extends StatefulWidget {
   const MainPages({super.key});
   
@@ -12,15 +11,19 @@ class MainPages extends StatefulWidget {
 }
 
 class _MainPagesState extends State<MainPages> {
-  final List<Widget> children = [
-    HomePage(),
-    CategoryPage()
-  ];
-
+  final List<Widget> _children = [HomePage(), CategoryPage()];
+  // fungsi untuk menyimpan halaman yang akan ditampilkan ketika user menekan icon di bottom navigation bar
+  int currentIndex = 0;
+  void onTabTapped(int index) {
+    setState(() {
+      currentIndex = index;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CalendarAppBar(
+      appBar: currentIndex == 0 
+      ? CalendarAppBar(
         accent: const Color.fromARGB(255, 176, 119, 138),
         backButton: false,
         locale: 'id',
@@ -28,30 +31,30 @@ class _MainPagesState extends State<MainPages> {
           print(value),
           firstDate: DateTime.now().subtract(Duration(days:140)),
           lastDate: DateTime.now(),
-      ),
+      ) : PreferredSize(
+        child: Container(
+          child: Text("Category")), 
+          preferredSize: Size.fromHeight(0)),
 
       floatingActionButton: FloatingActionButton(
         onPressed:(){},
         backgroundColor: const Color.fromARGB(255, 220, 129, 160), 
         child: Icon(Icons.add, color: Colors.white,),
       ),
-
-      body: HomePage(),
-
+      body: _children[currentIndex],
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-        IconButton(onPressed:(){}, icon: Icon(Icons.home)),
+        IconButton(onPressed:(){
+          onTabTapped(0);
+        }, icon: Icon(Icons.home)),
         SizedBox(
           width: 20,
         ),
         IconButton(onPressed:(){
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => CategoryPage()),
-          );
+          onTabTapped(1);
         }, icon: Icon(Icons.list)),
       ],),),
     );
