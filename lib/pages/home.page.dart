@@ -103,7 +103,7 @@ class HomePage extends StatelessWidget {
 
           // list transaksi pengeluaran
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Card(
               elevation: 10,
               child: ListTile(
