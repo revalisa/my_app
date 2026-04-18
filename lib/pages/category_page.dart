@@ -10,6 +10,23 @@ class CategoryPage extends StatefulWidget {
 class _CategoryPageState extends State<CategoryPage> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return SafeArea(
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Switch(
+                value: true, 
+                onChanged: (bool value) {} , 
+                inactiveTrackColor: const Color.fromARGB(255, 181, 230, 181), 
+                inactiveThumbColor: const Color.fromARGB(255, 120, 218, 118),
+                activeTrackColor: const Color.fromARGB(255, 200, 99, 71),
+              ),
+              IconButton(onPressed: () {}, icon: Icon(Icons.add)),
+            ],
+          )
+        ],
+      ));
   }
 }

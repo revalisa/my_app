@@ -10,6 +10,7 @@ class HomePage extends StatelessWidget {
       // fungsi untuk membuat halaman bisa discroll
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children:[
             // card untuk menampilkan income dan expense
             Padding(
@@ -22,7 +23,7 @@ class HomePage extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            child: Icon(Icons.download, color: const Color.fromARGB(255, 216, 106, 106)),
+                            child: Icon(Icons.download, color: const Color.fromARGB(255, 120, 218, 118)),
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 255, 253, 253),
                               borderRadius: BorderRadius.circular(8))
@@ -95,9 +96,9 @@ class HomePage extends StatelessWidget {
           // transaction history
           Padding(
             padding:  EdgeInsets.all(10),
-            child: Text("Transaction History", 
+            child: Text("Transaction History",
             style: GoogleFonts.montserrat(
-               fontSize: 16, fontWeight: FontWeight.bold
+               fontSize: 16, fontWeight: FontWeight.bold,
             ),),
           ),
 
@@ -118,7 +119,7 @@ class HomePage extends StatelessWidget {
                 subtitle: Text("nasi padang"),
                 // kegunaan leading untuk menampilkan icon di depan title dan subtitle
                 leading: Container(
-                  child: Icon(Icons.download, color: const Color.fromARGB(255, 167, 66, 66)),
+                  child: Icon(Icons.download, color: const Color.fromARGB(255, 120, 218, 118)),
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 255, 253, 253),
                     borderRadius: BorderRadius.circular(8))
@@ -144,7 +145,7 @@ class HomePage extends StatelessWidget {
                 subtitle: Text("Gaji Bulanan"),
                 // kegunaan leading untuk menampilkan icon di depan title dan subtitle
                 leading: Container(
-                  child: Icon(Icons.upload, color: const Color.fromARGB(255, 115, 27, 27)),
+                  child: Icon(Icons.upload, color: const Color.fromARGB(255, 200, 99, 71)),
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 255, 253, 253),
                     borderRadius: BorderRadius.circular(8))

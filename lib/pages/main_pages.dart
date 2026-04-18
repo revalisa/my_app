@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:calendar_appbar/calendar_appbar.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:my_app/pages/category_page.dart';
 import 'package:my_app/pages/home.page.dart';
 
@@ -34,15 +35,18 @@ class _MainPagesState extends State<MainPages> {
       ) : PreferredSize(
         child: Container(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
-            child: Text("Category"),
+            padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 16),
+            child: Text("Category", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),),
           )), 
-          preferredSize: Size.fromHeight(0)),
+          preferredSize: Size.fromHeight(100)),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed:(){},
-        backgroundColor: const Color.fromARGB(255, 220, 129, 160), 
-        child: Icon(Icons.add, color: Colors.white,),
+      floatingActionButton: Visibility(
+        visible: currentIndex == 0 ? true : false,
+        child: FloatingActionButton(
+          onPressed:(){},
+          backgroundColor: const Color.fromARGB(255, 220, 129, 160), 
+          child: Icon(Icons.add, color: Colors.white,),
+        ),
       ),
       body: _children[currentIndex],
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
