@@ -98,7 +98,9 @@ class _TransactionPageState extends State<TransactionPage> {
                     }
                 }
               ),
-            )
+            ),
+            SizedBox(height: 25,),
+            Center(child: ElevatedButton(onPressed: (){}, child: Text("Save")),)
           ],
       ))),
       );
