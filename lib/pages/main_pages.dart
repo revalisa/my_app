@@ -35,10 +35,11 @@ class _MainPagesState extends State<MainPages> {
       ) : PreferredSize(
         child: Container(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 16),
-            child: Text("Category", style: GoogleFonts.montserrat(fontSize: 20, fontWeight: FontWeight.bold),),
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+            child: Text("Category", style: GoogleFonts.montserrat(fontSize: 25, fontWeight: FontWeight.bold),),
           )), 
-          preferredSize: Size.fromHeight(100)),
+          // preferredSize untuk menentukan tinggi appbar ketika user berada di halaman category
+          preferredSize: Size.fromHeight(200)),
 
       floatingActionButton: Visibility(
         visible: currentIndex == 0 ? true : false,
