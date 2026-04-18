@@ -79,6 +79,8 @@ class _TransactionPageState extends State<TransactionPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextField(
+                // readonly digunakan agar date tidak bisa diedit
+                readOnly: true,
                 controller: dateController,
                 decoration: InputDecoration(labelText: "Enter Date"),
                 onTap: () async {
