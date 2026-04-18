@@ -72,6 +72,13 @@ class _TransactionPageState extends State<TransactionPage> {
                 );
               }).toList(),
               onChanged: (String ? value){}),
+            ),
+            SizedBox( height: 25,),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextField(
+                decoration: InputDecoration(labelText: "Enter Date"),
+              ),
             )
           ],
       ))),
