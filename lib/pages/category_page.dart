@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';  
-
+import 'package:google_fonts/google_fonts.dart'; 
+import '../models/database.dart'; 
+import 'package:flutter/src/widgets/framework.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
@@ -11,6 +12,17 @@ class CategoryPage extends StatefulWidget {
 
 class _CategoryPageState extends State<CategoryPage> {
   bool isExpense = true;
+  final AppDb database = AppDb();
+  TextEditingController categoryController = TextEditingController();
+
+  Future insert(String name, int type) async {
+    DateTime now = DateTime.now();
+    final row = await database.into(database.categories).insertReturning(
+      CategoriesCompanion.insert(name: name, createdAt: now, updateddAt: now, )
+    );
+    print('Masuk :' + row.toString());
+  }
+
 
   void openCategoryDialog() {
     showDialog(
@@ -35,13 +47,21 @@ class _CategoryPageState extends State<CategoryPage> {
                     height: 10,
                   ),
                   TextFormField(
+                    controller: categoryController,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(), hintText: "Category Name",), 
                   ),
                   SizedBox(
                     height: 10,
                   ),
-                  ElevatedButton(onPressed: (){}, child: Text("Save"))
+                  ElevatedButton(onPressed: (){
+                    insert(categoryController.text, isExpense ? 2 : 1 );
+                    Navigator.of(context, rootNavigator: true).pop('dialog');
+                    categoryController.clear();
+                    setState(() {
+                      
+                    });
+                  }, child: Text("Save"))
                 ],
               )
             ),
