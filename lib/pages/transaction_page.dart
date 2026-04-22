@@ -167,7 +167,12 @@ class _TransactionPageState extends State<TransactionPage> {
             ),
             SizedBox(height: 25),
             Center(child: ElevatedButton(onPressed: (){
-              insert(int.parse(ammountController.text), DateTime.parse(dateController.text), detailController.text, selectedCategory!.id);
+              insert(
+                int.parse(ammountController.text), 
+                DateTime.parse(dateController.text), 
+                detailController.text, 
+                selectedCategory!.id);
+              Navigator.pop(context, true);
             }, child: Text("Save")),)
           ],
       ))),
