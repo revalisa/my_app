@@ -148,7 +148,13 @@ class _CategoryPageState extends State<CategoryPage> {
                                   children: [
                                     IconButton(
                                       icon: Icon(Icons.delete),
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        database.deleteCategoryRepo(
+                                          snapshot.data![index].id
+                                        ).then((_) {
+                                          setState(() {});
+                                        });
+                                      },
                                     ),
                                     SizedBox(
                                       width: 10,

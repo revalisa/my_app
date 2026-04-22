@@ -30,6 +30,11 @@ class AppDb extends _$AppDb {
     return (update(categories)..where((tbl) => tbl.id.equals(id)))
     .write(CategoriesCompanion(name: Value(name)));
   }
+
+  // delete category
+  Future deleteCategoryRepo(int id) async {
+    return(delete(categories)..where((tbl) => tbl.id.equals(id))).go();
+  }
 }
 
 LazyDatabase _openConnection() {
