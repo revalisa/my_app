@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../models/database.dart';
 
 class TransactionPage extends StatefulWidget {
   const TransactionPage({super.key});
@@ -10,10 +11,26 @@ class TransactionPage extends StatefulWidget {
 }
 
 class _TransactionPageState extends State<TransactionPage> {
- bool isExpense = true;
- List<String> list = ['Makan dan Jajan', 'Transportasi', 'film'];
+  final AppDb database = AppDb();
+  bool isExpense = true;
+  List<String> list = ['Makan dan Jajan', 'Transportasi', 'film'];
   late String dropDownValue = list.first;
   TextEditingController dateController =TextEditingController();
+  TextEditingController detailController = TextEditingController();
+  TextEditingController ammountController = TextEditingController();
+
+  // insert transaction ke database
+  Future insert(
+    int ammount, DateTime date, String NewDetail, int categoryId) async {
+    
+    }
+
+  Future<List<Category>> getAllCategory(int type) async {
+    return await database.getAllCategoryRepo(type);
+  }
+  
+   @override
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,9 +66,10 @@ class _TransactionPageState extends State<TransactionPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextFormField(
                 keyboardType: TextInputType.number,
+                controller: ammountController,
                 decoration: InputDecoration(
                   border: UnderlineInputBorder(),
-                  labelText: "Ammout"),
+                  labelText: "Amount"),
               ),
             ),
             SizedBox(height: 25,),
@@ -99,8 +117,22 @@ class _TransactionPageState extends State<TransactionPage> {
                 }
               ),
             ),
-            SizedBox(height: 25,),
-            Center(child: ElevatedButton(onPressed: (){}, child: Text("Save")),)
+            SizedBox(height: 10,),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextFormField(
+                controller: detailController,
+                decoration: InputDecoration(
+                  border: UnderlineInputBorder(),
+                labelText: "Details"),
+              ),
+            ),
+            SizedBox(height: 25),
+            Center(child: ElevatedButton(onPressed: (){
+              print('amound :' + ammountController.text);
+              print('date :' + dateController.text);
+              print('detail :' + detailController.text);
+            }, child: Text("Save")),)
           ],
       ))),
       );
