@@ -98,6 +98,7 @@ class _TransactionPageState extends State<TransactionPage> {
                 } else {
                   if (snapshot.hasData) {
                     if (snapshot.data!.length > 0){
+                      selectedCategory == snapshot.data!.first;
                       print('Masuk :' + snapshot.data.toString());
                       return  Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
