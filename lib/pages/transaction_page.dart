@@ -22,8 +22,12 @@ class _TransactionPageState extends State<TransactionPage> {
   Category? selectedCategory;
   // insert transaction ke database
   Future insert(
-    int ammount, DateTime date, String NewDetail, int categoryId) async {
-    
+    int amount, DateTime date, String newDetail, int categoryId) async {
+    DateTime now = DateTime.now();
+    final row = await database.into(database.transactions).insertReturning(
+      TransactionsCompanion.insert(
+        name: newDetail, category_Id: categoryId, transaction_date: date, amount: amount, createdAt: now, updatedAt: now));
+    print('Masuk :' + row.toString());
   }
 
   Future<List<Category>> getAllCategory(int type) async {
@@ -55,6 +59,7 @@ class _TransactionPageState extends State<TransactionPage> {
                     setState(() {
                       isExpense = value;
                       type = (isExpense) ? 2 : 1;
+                      selectedCategory = null;
                     });
                   } , 
                   // innactiveTrackColor untuk warna track saat switch dalam keadaan off, inactiveThumbColor untuk warna thumb saat switch dalam keadaan off, activeColor untuk warna thumb saat switch dalam keadaan on
@@ -93,10 +98,13 @@ class _TransactionPageState extends State<TransactionPage> {
                 } else {
                   if (snapshot.hasData) {
                     if (snapshot.data!.length > 0){
+                      print('Masuk :' + snapshot.data.toString());
                       return  Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: DropdownButton<Category>(
-                          value: (selectedCategory == null) ? snapshot.data!.first : selectedCategory,
+                          value: (selectedCategory == null) 
+                          ? snapshot.data!.first 
+                          : selectedCategory,
                           isExpanded: true,
                           icon: Icon(Icons.arrow_downward),
                           items: (snapshot.data!).map((Category value){
@@ -158,9 +166,7 @@ class _TransactionPageState extends State<TransactionPage> {
             ),
             SizedBox(height: 25),
             Center(child: ElevatedButton(onPressed: (){
-              print('amound :' + ammountController.text);
-              print('date :' + dateController.text);
-              print('detail :' + detailController.text);
+              insert(int.parse(ammountController.text), DateTime.parse(dateController.text), detailController.text, selectedCategory!.id);
             }, child: Text("Save")),)
           ],
       ))),
