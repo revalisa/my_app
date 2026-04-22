@@ -13,23 +13,28 @@ class TransactionPage extends StatefulWidget {
 class _TransactionPageState extends State<TransactionPage> {
   final AppDb database = AppDb();
   bool isExpense = true;
+  late int type;
   List<String> list = ['Makan dan Jajan', 'Transportasi', 'film'];
   late String dropDownValue = list.first;
   TextEditingController dateController =TextEditingController();
   TextEditingController detailController = TextEditingController();
   TextEditingController ammountController = TextEditingController();
-
+  Category? selectedCategory;
   // insert transaction ke database
   Future insert(
     int ammount, DateTime date, String NewDetail, int categoryId) async {
     
-    }
+  }
 
   Future<List<Category>> getAllCategory(int type) async {
     return await database.getAllCategoryRepo(type);
   }
-  
-   @override
+  // override initState untuk menginisialisasi nilai type berdasarkan isExpense
+  @override
+  void initState() {
+    super.initState();
+    type = isExpense ? 2 : 1;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +54,7 @@ class _TransactionPageState extends State<TransactionPage> {
                   onChanged: (bool value) {
                     setState(() {
                       isExpense = value;
+                      type = (isExpense) ? 2 : 1;
                     });
                   } , 
                   // innactiveTrackColor untuk warna track saat switch dalam keadaan off, inactiveThumbColor untuk warna thumb saat switch dalam keadaan off, activeColor untuk warna thumb saat switch dalam keadaan on
@@ -79,20 +85,43 @@ class _TransactionPageState extends State<TransactionPage> {
               child: Text('Category', 
                   style: GoogleFonts.montserrat(fontSize: 16,),),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: DropdownButton<String>(
-                value: dropDownValue,
-                isExpanded: true,
-                icon: Icon(Icons.arrow_back),
-                items: list.map<DropdownMenuItem<String>>((String value){
-                  return DropdownMenuItem<String>(
-                  value: value, 
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (String ? value){}),
-            ),
+            FutureBuilder<List<Category>>(
+              future: getAllCategory(isExpense ? 2 : 1), 
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                } else {
+                  if (snapshot.hasData) {
+                    if (snapshot.data!.length > 0){
+                      return  Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: DropdownButton<Category>(
+                          value: (selectedCategory == null) ? snapshot.data!.first : selectedCategory,
+                          isExpanded: true,
+                          icon: Icon(Icons.arrow_downward),
+                          items: (snapshot.data!).map((Category value){
+                            return DropdownMenuItem<Category>(
+                              value: value, 
+                              child: Text(value.name),
+                            );
+                          }).toList(),
+                          // onChanged untuk menangani perubahan nilai dropdown
+                          onChanged: (Category ? value){
+                            setState(() {
+                              selectedCategory = value;
+                            });
+                          },
+                        ),
+                      );
+                    } else {
+                      return Center(child: Text("data kosong"));
+                      }
+                  } else {return Center(
+                      child: Text("tidak ada data"),
+                    );
+                  }
+                }
+              }),
             SizedBox( height: 25,),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
