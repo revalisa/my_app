@@ -24,6 +24,12 @@ class AppDb extends _$AppDb {
   Future<List<Category>> getAllCategoryRepo(int type) async {
     return await (select(categories)..where((tbl) => tbl.type.equals(type))).get();
   }
+
+  // update category
+  Future updateCategoryRepo(int id, String name) async {
+    return (update(categories)..where((tbl) => tbl.id.equals(id)))
+    .write(CategoriesCompanion(name: Value(name)));
+  }
 }
 
 LazyDatabase _openConnection() {

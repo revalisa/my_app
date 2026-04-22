@@ -28,6 +28,10 @@ class _CategoryPageState extends State<CategoryPage> {
     return await database.getAllCategoryRepo(type);
   }
 
+  Future updateCategory(int categoryId, String NewName) async {
+   return await database.updateCategoryRepo(categoryId, NewName);
+  }
+
   void openCategoryDialog(Category? category) {
     if (category != null) {
       categoryNameController.text = category.name;
@@ -62,13 +66,13 @@ class _CategoryPageState extends State<CategoryPage> {
                     height: 10,
                   ),
                   ElevatedButton(onPressed: (){
-                    if ( category == null) {
+                    if( category == null) {
                       insert(categoryNameController.text, isExpense ? 2 : 1);// insert category
                     }
                     else {
+                      updateCategory(category.id, categoryNameController.text);
                       // update category
                     }
-                    insert(categoryNameController.text, isExpense ? 2 : 1 );
                     Navigator.of(context, rootNavigator: true)
                     .pop('dialog');
                     categoryNameController.clear();
