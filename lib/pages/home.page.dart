@@ -123,6 +123,7 @@ class _HomePageState extends State<HomePage> {
                 return ListView.builder(
                   // shrinkWrap berfungsi untuk membuat listview tidak mengambil semua ruang yang tersedia
                   shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
                   itemCount: snapshot.data!.length,
                   itemBuilder: (context, index) {
                     return Padding(
@@ -157,7 +158,9 @@ class _HomePageState extends State<HomePage> {
                             snapshot.data![index].category.name+" ("+snapshot.data![index].transaction.name+")"),
                           // kegunaan leading untuk menampilkan icon di depan title dan subtitle
                           leading: Container(
-                            child: Icon( Icons.upload, color: const Color.fromARGB(255, 200, 99, 71)),
+                            child: (snapshot.data![index].category.type == 2)
+                              ? Icon( Icons.upload, color: const Color.fromARGB(255, 200, 99, 71))
+                              : Icon( Icons.download, color: const Color.fromARGB(255, 120, 218, 118)),
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 255, 253, 253),
                               borderRadius: BorderRadius.circular(8))
