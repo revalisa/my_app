@@ -40,7 +40,21 @@ class _TransactionPageState extends State<TransactionPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.transactionWidthCategory != null){
+      updateTransactionView(widget, widget.transactionWidthCategory!);
+    }
     type = isExpense ? 2 : 1;
+  }
+
+  void updateTransactionView(TransactionPage widget, TransactionWidthCategory transactionWidthCategory) async {
+    ammountController.text = 
+      transactionWidthCategory.transaction.amount.toString();
+    dateController.text = 
+      DateFormat('yyyy-MM-dd').format(transactionWidthCategory.transaction.transaction_date);
+    detailController.text = transactionWidthCategory.transaction.name;
+    type = transactionWidthCategory.category.type;
+    (type == 2) ? isExpense = true : isExpense = false;
+    selectedCategory = transactionWidthCategory.category;
   }
 
   @override
