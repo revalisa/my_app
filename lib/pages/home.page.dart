@@ -138,8 +138,9 @@ class _HomePageState extends State<HomePage> {
                           ),
                           title: Text("Rp." + 
                           snapshot.data![index].transaction.amount
-                          .toString()),
-                          subtitle: Text(snapshot.data![index].category.name),
+                            .toString()),
+                          subtitle: Text(
+                            snapshot.data![index].category.name+" ("+snapshot.data![index].transaction.name+")"),
                           // kegunaan leading untuk menampilkan icon di depan title dan subtitle
                           leading: Container(
                             child: Icon( Icons.upload, color: const Color.fromARGB(255, 200, 99, 71)),
