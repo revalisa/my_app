@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:calendar_appbar/calendar_appbar.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:my_app/pages/category_page.dart';
 import 'package:my_app/pages/home.page.dart';
 import 'package:my_app/pages/transaction_page.dart';
@@ -13,14 +14,31 @@ class MainPages extends StatefulWidget {
 }
 
 class _MainPagesState extends State<MainPages> {
-  final List<Widget> _children = [HomePage(), CategoryPage()];
+  late DateTime selectedDate;
+  // late artinya variabel yang akan digunakan nanti, tapi belum diinisialisasi sekarang
+  late List<Widget> _children ;
   // fungsi untuk menyimpan halaman yang akan ditampilkan ketika user menekan icon di bottom navigation bar
-  int currentIndex = 0;
-  void onTabTapped(int index) {
+  late int currentIndex = 0;
+
+  @override
+  void initState() {
+    updateView(0, DateTime.now());
+    super.initState();
+  }
+
+  void updateView(int index, DateTime date) {
     setState(() {
+      if (date != true) {
+      selectedDate = DateTime.parse(DateFormat('yyyy-MM-dd').format(date));
+      } 
       currentIndex = index;
+      _children = [
+        HomePage(selectedDate: selectedDate),
+        CategoryPage()
+      ];
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,10 +47,15 @@ class _MainPagesState extends State<MainPages> {
         accent: const Color.fromARGB(255, 176, 119, 138),
         backButton: false,
         locale: 'id',
-        onDateChanged: (value) =>
-          print(value),
-          firstDate: DateTime.now().subtract(Duration(days:140)),
-          lastDate: DateTime.now(),
+        onDateChanged: (value) {
+          setState(() {
+            selectedDate = value;
+            updateView(0, selectedDate);
+          });
+        },
+        firstDate: DateTime.now().subtract(const Duration(days: 140)),
+        lastDate: DateTime.now(),
+
       ) : PreferredSize(
         child: Container(
           child: Padding(
@@ -63,13 +86,13 @@ class _MainPagesState extends State<MainPages> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
         IconButton(onPressed:(){
-          onTabTapped(0);
+          updateView(0, DateTime.now());
         }, icon: Icon(Icons.home)),
         SizedBox(
           width: 20,
         ),
         IconButton(onPressed:(){
-          onTabTapped(1);
+          updateView(1, DateTime.now());
         }, icon: Icon(Icons.list)),
       ],),),
     );

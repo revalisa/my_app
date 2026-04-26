@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 // These imports are used to open the database
 import 'package:drift/native.dart';
+import 'package:my_app/models/transaction_width_category.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'category.dart';
@@ -21,8 +22,10 @@ class AppDb extends _$AppDb {
   @override
   int get schemaVersion => 1;
 
+  // CRUD category
   Future<List<Category>> getAllCategoryRepo(int type) async {
-    return await (select(categories)..where((tbl) => tbl.type.equals(type))).get();
+    return await (select(categories)..where((tbl) => tbl.type.equals(type)))
+    .get();
   }
 
   // update category
@@ -34,6 +37,23 @@ class AppDb extends _$AppDb {
   // delete category
   Future deleteCategoryRepo(int id) async {
     return(delete(categories)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
+  // transaction
+  Stream<List<TransactionWidthCategory>> getTransactionByDate(DateTime date) {
+    final query = select(transactions).join([
+      innerJoin(categories, categories.id.equalsExp(transactions.category_Id))
+    ])
+      ..where(transactions.transaction_date.equals(date));
+
+    return query.watch().map((rows) {
+      return rows.map((row) {
+        return TransactionWidthCategory(
+          transaction: row.readTable(transactions),
+          category: row.readTable(categories),
+        );
+      }).toList();
+    });
   }
 }
 

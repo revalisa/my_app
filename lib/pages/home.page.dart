@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:my_app/models/database.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class HomePage extends StatefulWidget {
+  final DateTime selectedDate;
+   HomePage({super.key, required this.selectedDate});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final AppDb database = AppDb();
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       // fungsi untuk membuat halaman bisa discroll
@@ -101,7 +108,7 @@ class HomePage extends StatelessWidget {
                fontSize: 16, fontWeight: FontWeight.bold,
             ),),
           ),
-
+       
           // list transaksi pengeluaran
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

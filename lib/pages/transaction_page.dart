@@ -172,6 +172,7 @@ class _TransactionPageState extends State<TransactionPage> {
                 DateTime.parse(dateController.text), 
                 detailController.text, 
                 selectedCategory!.id);
+                // setelah insert data, kembali ke halaman sebelumnya
               Navigator.pop(context, true);
             }, child: Text("Save")),)
           ],
