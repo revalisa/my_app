@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:my_app/models/transaction_width_category.dart';
 import '../models/database.dart';
 
 class TransactionPage extends StatefulWidget {
-  const TransactionPage({super.key});
+  final TransactionWidthCategory? transactionWidthCategory;
+  const TransactionPage({Key? key, required this.transactionWidthCategory}) :
+    super(key: key);
 
   @override
   State<TransactionPage> createState() => _TransactionPageState();

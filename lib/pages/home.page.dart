@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_app/models/database.dart';
+import 'package:my_app/pages/transaction_page.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime selectedDate;
@@ -108,6 +109,7 @@ class _HomePageState extends State<HomePage> {
                fontSize: 16, fontWeight: FontWeight.bold,
             ),),
           ),
+
           // menampilkan di transaksi home
           StreamBuilder(stream: database.getTransactionByDate(widget.selectedDate), 
           builder: (context, snapshot) {
@@ -131,11 +133,23 @@ class _HomePageState extends State<HomePage> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                            Icon(Icons.delete),
-                            // kegunaan SizedBox untuk memberikan jarak antara icon delete dan edit
-                            SizedBox(width: 10,), 
-                            Icon(Icons.edit)],
+                              IconButton(onPressed: (){}, icon: Icon( Icons.delete)),
+                              SizedBox(width: 10,),
+                              IconButton( 
+                                icon: Icon(Icons.edit), 
+                                onPressed: (){
+                                Navigator.of( context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => TransactionPage(
+                                      transactionWidthCategory: 
+                                        snapshot.data![index],
+                                    )
+                                  )
+                                );}
+                              )
+                            ],
                           ),
+                        
                           title: Text("Rp." + 
                           snapshot.data![index].transaction.amount
                             .toString()),
@@ -147,7 +161,7 @@ class _HomePageState extends State<HomePage> {
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 255, 253, 253),
                               borderRadius: BorderRadius.circular(8))
-                            ),
+                          ),
                         ),
                       ),
                     );
