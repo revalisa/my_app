@@ -108,59 +108,62 @@ class _HomePageState extends State<HomePage> {
                fontSize: 16, fontWeight: FontWeight.bold,
             ),),
           ),
-       
-          // list transaksi pengeluaran
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Card(
-              elevation: 10,
-              child: ListTile(
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [Icon(Icons.delete),
-                  // kegunaan SizedBox untuk memberikan jarak antara icon delete dan edit
-                  SizedBox(width: 10,), 
-                  Icon(Icons.edit)],
-                ),
-                title: Text("Rp. 300.000"),
-                subtitle: Text("nasi padang"),
-                // kegunaan leading untuk menampilkan icon di depan title dan subtitle
-                leading: Container(
-                  child: Icon(Icons.download, color: const Color.fromARGB(255, 120, 218, 118)),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 255, 253, 253),
-                    borderRadius: BorderRadius.circular(8))
-                  ),
-              ),
-            ),
-          ),
-
-          // list transaksi pemasukan
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Card(
-              elevation: 10,
-              child: ListTile(
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [Icon(Icons.delete),
-                  // kegunaan SizedBox untuk memberikan jarak antara icon delete dan edit
-                  SizedBox(width: 10,), 
-                  Icon(Icons.edit)],
-                ),
-                title: Text("Rp. 300.000.000"),
-                subtitle: Text("Gaji Bulanan"),
-                // kegunaan leading untuk menampilkan icon di depan title dan subtitle
-                leading: Container(
-                  child: Icon(Icons.upload, color: const Color.fromARGB(255, 200, 99, 71)),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 255, 253, 253),
-                    borderRadius: BorderRadius.circular(8))
-                  ),
-              ),
-            ),
-          )
-
+          // menampilkan di transaksi home
+          StreamBuilder(stream: database.getTransactionByDate(widget.selectedDate), 
+          builder: (context, snapshot) {
+            if(snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            } else {
+              if (snapshot.hasData) {
+              if (snapshot.data!.length > 0) {
+                return ListView.builder(
+                  // shrinkWrap berfungsi untuk membuat listview tidak mengambil semua ruang yang tersedia
+                  shrinkWrap: true,
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Card(
+                        elevation: 10,
+                        child: ListTile(
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                            Icon(Icons.delete),
+                            // kegunaan SizedBox untuk memberikan jarak antara icon delete dan edit
+                            SizedBox(width: 10,), 
+                            Icon(Icons.edit)],
+                          ),
+                          title: Text("Rp." + 
+                          snapshot.data![index].transaction.amount
+                          .toString()),
+                          subtitle: Text(snapshot.data![index].category.name),
+                          // kegunaan leading untuk menampilkan icon di depan title dan subtitle
+                          leading: Container(
+                            child: Icon( Icons.upload, color: const Color.fromARGB(255, 200, 99, 71)),
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 255, 253, 253),
+                              borderRadius: BorderRadius.circular(8))
+                            ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+                } else {
+                  return Center(
+                    child: Text("data kosong"),
+                  );
+                }  
+              } else {
+                return Center(
+                  child: Text("tidak ada data"),
+                );
+              }
+            }
+          }),
         ]
       )
       ),
