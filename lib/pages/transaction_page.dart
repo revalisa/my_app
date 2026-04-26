@@ -98,7 +98,9 @@ class _TransactionPageState extends State<TransactionPage> {
                 } else {
                   if (snapshot.hasData) {
                     if (snapshot.data!.length > 0){
-                      selectedCategory == snapshot.data!.first;
+                      selectedCategory == (selectedCategory == null) 
+                      ? snapshot.data!.first 
+                      : selectedCategory;
                       print('Masuk :' + snapshot.data.toString());
                       return  Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -108,10 +110,10 @@ class _TransactionPageState extends State<TransactionPage> {
                           : selectedCategory,
                           isExpanded: true,
                           icon: Icon(Icons.arrow_downward),
-                          items: (snapshot.data!).map((Category value){
+                          items: (snapshot.data!).map((Category item){
                             return DropdownMenuItem<Category>(
-                              value: value, 
-                              child: Text(value.name),
+                              value: item, 
+                              child: Text(item.name),
                             );
                           }).toList(),
                           // onChanged untuk menangani perubahan nilai dropdown
@@ -143,9 +145,9 @@ class _TransactionPageState extends State<TransactionPage> {
                   DateTime? pickedDate = await showDatePicker(
                     context: context, 
                     initialDate:DateTime.now(), 
-                    firstDate: DateTime(1999), 
-                    lastDate: DateTime(2099));
-
+                    firstDate: DateTime.now().subtract(const Duration(days: 140)),
+                    lastDate: DateTime.now()
+                  );
                     if (pickedDate != null){
                       String formatedDate = 
                         DateFormat('yyyy-MM-dd').format(pickedDate);
