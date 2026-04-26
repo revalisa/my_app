@@ -42,8 +42,9 @@ class _TransactionPageState extends State<TransactionPage> {
     super.initState();
     if (widget.transactionWidthCategory != null){
       updateTransactionView(widget, widget.transactionWidthCategory!);
+    } else {
+      type = isExpense ? 2 : 1;
     }
-    type = isExpense ? 2 : 1;
   }
 
   void updateTransactionView(TransactionPage widget, TransactionWidthCategory transactionWidthCategory) async {
