@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:my_app/models/database.dart';
 import 'package:my_app/models/transaction_width_category.dart';
 import 'package:my_app/pages/transaction_page.dart';
@@ -8,13 +9,21 @@ class HomePage extends StatefulWidget {
   final DateTime selectedDate;
    HomePage({super.key, required this.selectedDate});
 
+  final formatCurrency =
+    NumberFormat.currency(locale: 'id_ID', symbol: 'Rp. ', decimalDigits: 0);
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
   final AppDb database = AppDb();
+    @override
   Widget build(BuildContext context) {
+
+  int totalIncome = 0;
+  int totalExpense = 0;
+
     return SingleChildScrollView(
       // fungsi untuk membuat halaman bisa discroll
       child: SafeArea(
@@ -57,7 +66,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 SizedBox(height: 10),
                                 Text(
-                                  "Rp. 300.000.000",
+                                  widget.formatCurrency.format(totalIncome),
                                   style: GoogleFonts.montserrat(
                                     color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold
                                   ),
@@ -65,6 +74,7 @@ class _HomePageState extends State<HomePage> {
                             ],
                           )
                       ]),
+
                       // expense
                       Row(
                         children: [
@@ -88,7 +98,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 SizedBox(height: 10),
                                 Text(
-                                  "Rp. 12.000.000",
+                                  widget.formatCurrency.format(totalExpense),
                                   style: GoogleFonts.montserrat(
                                     color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold
                                   ),
@@ -113,13 +123,20 @@ class _HomePageState extends State<HomePage> {
           // menampilkan di transaksi home
           StreamBuilder<List<TransactionWidthCategory>>(
             stream: database.getTransactionByDate(widget.selectedDate), 
-          builder: (context, snapshot) {
+            builder: (context, snapshot) {
             if(snapshot.connectionState == ConnectionState.waiting) {
               return Center(
                 child: CircularProgressIndicator(),
               );
             } else {
               if (snapshot.hasData) {
+                for (var item in snapshot.data!) {
+                  if (item.category.type == 2) {
+                    totalExpense += item.transaction.amount;
+                  } else {
+                    totalIncome += item.transaction.amount;
+                  }
+                }
               if (snapshot.data!.length > 0) {
                 return ListView.builder(
                   // shrinkWrap berfungsi untuk membuat listview tidak mengambil semua ruang yang tersedia

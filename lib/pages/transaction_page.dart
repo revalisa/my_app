@@ -122,7 +122,7 @@ class _TransactionPageState extends State<TransactionPage> {
                 } else {
                   if (snapshot.hasData) {
                     if (snapshot.data!.length > 0){
-                      selectedCategory == (selectedCategory == null) 
+                      selectedCategory = (selectedCategory == null) 
                       ? snapshot.data!.first 
                       : selectedCategory;
                       print('Masuk :' + snapshot.data.toString());
