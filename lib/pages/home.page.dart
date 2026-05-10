@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:my_app/models/database.dart';
 import 'package:my_app/models/transaction_width_category.dart';
 import 'package:my_app/pages/transaction_page.dart';
+import 'package:my_app/pages/statistic_page.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime selectedDate;
@@ -28,7 +29,28 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return Scaffold(
+
+  appBar: AppBar(
+    title: Text("Finance App"),
+    actions: [
+      IconButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  StatisticPage(),
+            ),
+          );
+        },
+
+        icon: Icon(Icons.bar_chart_rounded),
+      ),
+    ],
+  ),
+
+  body: SingleChildScrollView(
       child: SafeArea(
         child: StreamBuilder<List<TransactionWidthCategory>>(
           stream: database.getTransactionByDate(widget.selectedDate),
@@ -330,6 +352,6 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
-    );
+    ));
   }
 }

@@ -72,6 +72,28 @@ class AppDb extends _$AppDb {
     return(delete(transactions)..where((tbl) => tbl.id.equals(id))).go();
   }
 
+  // chart
+  Stream<List<TransactionWidthCategory>> getAllTransactions() {
+  return select(transactions).join([
+    innerJoin(
+      categories,
+      categories.id.equalsExp(transactions.category_Id),
+    )
+  ]).watch().map((rows) {
+
+    return rows.map((row) {
+
+      final transaction = row.readTable(transactions);
+      final category = row.readTable(categories);
+
+      return TransactionWidthCategory(
+        transaction: transaction,
+        category: category,
+      );
+
+    }).toList();
+  });
+}
 }
 
 LazyDatabase _openConnection() {
