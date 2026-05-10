@@ -36,15 +36,21 @@ class _TransactionPageState extends State<TransactionPage> {
   Future<List<Category>> getAllCategory(int type) async {
     return await database.getAllCategoryRepo(type);
   }
+
+  Future update( int id, int amount, int categoryId, DateTime transactionDate, String nameDetails) async {
+    return await database.updateTransactionRepo(
+      id, amount, categoryId, transactionDate, nameDetails);
+  }
   // override initState untuk menginisialisasi nilai type berdasarkan isExpense
   @override
   void initState() {
-    super.initState();
     if (widget.transactionWidthCategory != null){
       updateTransactionView(widget, widget.transactionWidthCategory!);
     } else {
       type = isExpense ? 2 : 1;
     }
+    
+      super.initState();
   }
 
   void updateTransactionView(TransactionPage widget, TransactionWidthCategory transactionWidthCategory) async {
@@ -186,12 +192,23 @@ class _TransactionPageState extends State<TransactionPage> {
               ),
             ),
             SizedBox(height: 25),
-            Center(child: ElevatedButton(onPressed: (){
-              insert(
-                int.parse(ammountController.text), 
-                DateTime.parse(dateController.text), 
-                detailController.text, 
-                selectedCategory!.id);
+            Center(
+              child: ElevatedButton(
+                onPressed: () async {
+                  (widget.transactionWidthCategory == null) 
+              ? insert(
+                  int.parse(ammountController.text), 
+                  DateTime.parse(dateController.text), 
+                  detailController.text, 
+                  selectedCategory!.id) 
+              : await update(
+                  // kegunaan ! untuk memastikan bahwa nilai tidak null, 
+                  widget.transactionWidthCategory!.transaction.id, 
+                  int.parse(ammountController.text),
+                  selectedCategory!.id,
+                  DateTime.parse(dateController.text),
+                  detailController.text
+              );
                 // setelah insert data, kembali ke halaman sebelumnya
               Navigator.pop(context, true);
             }, child: Text("Save")),)
