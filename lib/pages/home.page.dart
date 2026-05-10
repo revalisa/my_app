@@ -7,10 +7,17 @@ import 'package:my_app/pages/transaction_page.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime selectedDate;
-   HomePage({super.key, required this.selectedDate});
 
-  final formatCurrency =
-    NumberFormat.currency(locale: 'id_ID', symbol: 'Rp. ', decimalDigits: 0);
+  HomePage({
+    super.key,
+    required this.selectedDate,
+  });
+
+  final formatCurrency = NumberFormat.currency(
+    locale: 'id_ID',
+    symbol: 'Rp. ',
+    decimalDigits: 0,
+  );
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -18,212 +25,309 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final AppDb database = AppDb();
-    @override
+
+  @override
   Widget build(BuildContext context) {
-
-  int totalIncome = 0;
-  int totalExpense = 0;
-
     return SingleChildScrollView(
-      // fungsi untuk membuat halaman bisa discroll
       child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children:[
-            // card untuk menampilkan income dan expense
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 224, 173, 190),
-                  borderRadius: BorderRadius.circular(16),
-              ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                  // row berfungsi untuk membuat layout mendatar
-                      Row(
-                        children: [
-                          Container(
-                            child: Icon(Icons.download, color: Colors.green),
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 255, 253, 253),
-                              borderRadius: BorderRadius.circular(8))
-                            ),
-                          SizedBox(
-                            width: 15,
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                                Text(
-                                  "Pemasukan",
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white, fontSize: 12,fontWeight: FontWeight.bold
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  widget.formatCurrency.format(totalIncome),
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold
-                                  ),
-                              )
-                            ],
-                          )
-                      ]),
+        child: StreamBuilder<List<TransactionWidthCategory>>(
+          stream: database.getTransactionByDate(widget.selectedDate),
 
-                      // expense
-                      Row(
-                        children: [
-                          Container(
-                            child: Icon(Icons.upload, color: Colors.red),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8))
-                            ),
-                          SizedBox(
-                            width: 15,
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                                Text(
-                                  "Pengeluaran",
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white, fontSize: 12,fontWeight: FontWeight.bold
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                Text(
-                                  widget.formatCurrency.format(totalExpense),
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold
-                                  ),
-                              )
-                            ],
-                          )
-                      ]
-                      ),
-                  ]),
-            )
-          ),
+          builder: (context, snapshot) {
 
-          // transaction history
-          Padding(
-            padding:  EdgeInsets.all(10),
-            child: Text("Transaksi",
-            style: GoogleFonts.montserrat(
-               fontSize: 16, fontWeight: FontWeight.bold,
-            ),),
-          ),
-
-          // menampilkan di transaksi home
-          StreamBuilder<List<TransactionWidthCategory>>(
-            stream: database.getTransactionByDate(widget.selectedDate), 
-            builder: (context, snapshot) {
-            if(snapshot.connectionState == ConnectionState.waiting) {
+            // loading
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(
                 child: CircularProgressIndicator(),
               );
-            } else {
-              if (snapshot.hasData) {
-                for (var item in snapshot.data!) {
-                  if (item.category.type == 2) {
-                    totalExpense += item.transaction.amount;
-                  } else {
-                    totalIncome += item.transaction.amount;
-                  }
+            }
+
+            // total income & expense
+            int totalIncome = 0;
+            int totalExpense = 0;
+
+            // hitung total
+            if (snapshot.hasData) {
+
+              for (var item in snapshot.data!) {
+
+                // type 1 = income
+                if (item.category.type == 1) {
+                  totalIncome += item.transaction.amount;
                 }
-              if (snapshot.data!.length > 0) {
-                return ListView.builder(
-                  // shrinkWrap berfungsi untuk membuat listview tidak mengambil semua ruang yang tersedia
-                  shrinkWrap: true,
-                  // bouncingScrollPhysics berfungsi untuk memberikan efek bouncing saat scroll
-                  physics: BouncingScrollPhysics(),
-                  itemCount: snapshot.data!.length,
-                  // reverse berfungsi untuk membalik urutan data yang ditampilkan
-                  reverse: true,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Card(
-                        elevation: 10,
-                        child: ListTile(
-                          title: Text(
-                                    'Rp. ${snapshot.data![index].transaction.amount}'),
-                                subtitle: Text(
-                                    '${snapshot.data![index].category.name} - ${snapshot.data![index].transaction.name} '),
-                                leading: Container(
-                                  decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8)),
-                                  child: Icon(
-                                    snapshot.data![index].category.type == 2
-                                        ? Icons.upload
-                                        : Icons.download,
-                                    color:
-                                        snapshot.data![index].category.type == 2
-                                            ? Colors.red
-                                            : Colors.green,
-                                  ),
-                                ),
-                           trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                        onPressed: () {
-                                          database.deleteTransactionRepo(
-                                              snapshot
-                                                  .data![index].transaction.id);
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                  'Berhasil menghapus data'),
-                                            ),
-                                          );
-                                          setState(() {});
-                                        },
-                                        icon: Icon(Icons.delete)),
-                                    const SizedBox(width: 10),
-                                    IconButton(
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                TransactionPage(
-                                              transactionWidthCategory:
-                                                  snapshot.data![index],
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      icon: Icon(Icons.edit),
-                                    ),
-                                  ],
-                                ),
+
+                // type 2 = expense
+                if (item.category.type == 2) {
+                  totalExpense += item.transaction.amount;
+                }
+              }
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                // CARD TOTAL
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(20),
+
+                    decoration: BoxDecoration(
+                      color: Color.fromARGB(255, 224, 173, 190),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+
+                        // PEMASUKAN
+                        Row(
+                          children: [
+
+                            Container(
+                              padding: EdgeInsets.all(8),
+
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+
+                              child: Icon(
+                                Icons.download,
+                                color: Colors.green,
                               ),
                             ),
-                          );
-                        },
+
+                            SizedBox(width: 15),
+
+                            Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+
+                              children: [
+
+                                Text(
+                                  "Pemasukan",
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+
+                                SizedBox(height: 10),
+
+                                Text(
+                                  widget.formatCurrency
+                                      .format(totalIncome),
+
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+
+                        // PENGELUARAN
+                        Row(
+                          children: [
+
+                            Container(
+                              padding: EdgeInsets.all(8),
+
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+
+                              child: Icon(
+                                Icons.upload,
+                                color: Colors.red,
+                              ),
+                            ),
+
+                            SizedBox(width: 15),
+
+                            Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+
+                              children: [
+
+                                Text(
+                                  "Pengeluaran",
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+
+                                SizedBox(height: 10),
+
+                                Text(
+                                  widget.formatCurrency
+                                      .format(totalExpense),
+
+                                  style: GoogleFonts.montserrat(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // TITLE TRANSAKSI
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Text(
+                    "Transaksi",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                // LIST TRANSAKSI
+                if (snapshot.hasData &&
+                    snapshot.data!.isNotEmpty)
+
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    reverse: true,
+                    itemCount: snapshot.data!.length,
+
+                    itemBuilder: (context, index) {
+
+                      final item = snapshot.data![index];
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+
+                        child: Card(
+                          elevation: 10,
+
+                          child: ListTile(
+
+                            // nominal
+                            title: Text(
+                              widget.formatCurrency.format(
+                                item.transaction.amount,
+                              ),
+                            ),
+
+                            // detail
+                            subtitle: Text(
+                              '${item.category.name} - ${item.transaction.name}',
+                            ),
+
+                            // icon
+                            leading: Container(
+                              padding: EdgeInsets.all(8),
+
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius:
+                                    BorderRadius.circular(8),
+                              ),
+
+                              child: Icon(
+                                item.category.type == 2
+                                    ? Icons.upload
+                                    : Icons.download,
+
+                                color:
+                                    item.category.type == 2
+                                        ? Colors.red
+                                        : Colors.green,
+                              ),
+                            ),
+
+                            // action button
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+
+                              children: [
+
+                                // DELETE
+                                IconButton(
+                                  onPressed: () async {
+
+                                    await database
+                                        .deleteTransactionRepo(
+                                      item.transaction.id,
+                                    );
+
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Berhasil menghapus data',
+                                        ),
+                                      ),
+                                    );
+
+                                    setState(() {});
+                                  },
+
+                                  icon: Icon(Icons.delete),
+                                ),
+
+                                SizedBox(width: 10),
+
+                                // EDIT
+                                IconButton(
+                                  onPressed: () {
+
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            TransactionPage(
+                                          transactionWidthCategory:
+                                              item,
+                                        ),
+                                      ),
+                                    );
+                                  },
+
+                                  icon: Icon(Icons.edit),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       );
-                    } else {
-                      return Center(
-                        child: Text('Tidak ada data..!'),
-                      );
-                    }
-                  } else {
-                    return Center(
-                      child: Text('Tidak ada data..!'),
-                    );
-                  }
-                }
-              },
-            ),
-          ],
+                    },
+                  )
+
+                else
+
+                  Center(
+                    child: Text(
+                      'Tidak ada data..!',
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
