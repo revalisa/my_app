@@ -21,7 +21,7 @@ class _TransactionPageState extends State<TransactionPage> {
   late String dropDownValue = list.first;
   TextEditingController dateController =TextEditingController();
   TextEditingController detailController = TextEditingController();
-  TextEditingController ammountController = TextEditingController();
+  TextEditingController amountController = TextEditingController();
   Category? selectedCategory;
   // insert transaction ke database
   Future insert(
@@ -54,7 +54,7 @@ class _TransactionPageState extends State<TransactionPage> {
   }
 
   void updateTransactionView(TransactionPage widget, TransactionWidthCategory transactionWidthCategory) async {
-    ammountController.text = 
+    amountController.text = 
       transactionWidthCategory.transaction.amount.toString();
     dateController.text = 
       DateFormat('yyyy-MM-dd').format(transactionWidthCategory.transaction.transaction_date);
@@ -101,7 +101,7 @@ class _TransactionPageState extends State<TransactionPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: TextFormField(
                 keyboardType: TextInputType.number,
-                controller: ammountController,
+                controller: amountController,
                 decoration: InputDecoration(
                   border: UnderlineInputBorder(),
                   labelText: "Amount"),
@@ -197,14 +197,14 @@ class _TransactionPageState extends State<TransactionPage> {
                 onPressed: () async {
                   (widget.transactionWidthCategory == null) 
               ? insert(
-                  int.parse(ammountController.text), 
+                  int.parse(amountController.text), 
                   DateTime.parse(dateController.text), 
                   detailController.text, 
                   selectedCategory!.id) 
               : await update(
                   // kegunaan ! untuk memastikan bahwa nilai tidak null, 
                   widget.transactionWidthCategory!.transaction.id, 
-                  int.parse(ammountController.text),
+                  int.parse(amountController.text),
                   selectedCategory!.id,
                   DateTime.parse(dateController.text),
                   detailController.text

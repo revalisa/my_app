@@ -107,10 +107,10 @@ class _CategoryPageState extends State<CategoryPage> {
                     });
                   } , 
                   // innactiveTrackColor untuk warna track saat switch dalam keadaan off, inactiveThumbColor untuk warna thumb saat switch dalam keadaan off, activeColor untuk warna thumb saat switch dalam keadaan on
-                  inactiveTrackColor: const Color.fromARGB(255, 198, 235, 198), 
-                  inactiveThumbColor: const Color.fromARGB(255, 120, 218, 118),
+                  inactiveTrackColor: const Color.fromARGB(255, 183, 232, 185), 
+                  inactiveThumbColor: Colors.green,
                   // activecolor untuk warna thumb saat switch dalam keadaan on
-                  activeThumbColor: const Color.fromARGB(255, 200, 99, 71),
+                  activeThumbColor: Colors.red,
                 ),
                 IconButton(onPressed: () {
                   openCategoryDialog(null);
@@ -174,10 +174,10 @@ class _CategoryPageState extends State<CategoryPage> {
                                         borderRadius: BorderRadius.circular(8)),
                                     child: (isExpense)
                                         ? Icon(Icons.upload,
-                                            color: Colors.redAccent[400])
+                                            color: Colors.red)
                                         : Icon(
                                             Icons.download,
-                                            color: Colors.greenAccent[400],
+                                            color: Colors.green,
                                           )),
                                 title: Text(snapshot.data![index].name)),
                           ),

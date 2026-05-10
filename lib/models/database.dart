@@ -58,14 +58,20 @@ class AppDb extends _$AppDb {
 
     // update transaction
   Future updateTransactionRepo(int id, int amount, int categoryId, DateTime transactionDate, String nameDetails) async {
-    return (update(transactions)..where((tbl) => tbl.id.equals(id)))
-    .write(TransactionsCompanion(
-      name: Value(nameDetails),
-      amount: Value(amount),
-      category_Id: Value(categoryId),
-      transaction_date: Value(transactionDate)
-    ));
+    return (update(transactions)..where((tbl) => tbl.id.equals(id))).write(
+      TransactionsCompanion(
+        amount: Value(amount),
+        category_Id: Value(categoryId),
+        transaction_date: Value(transactionDate),
+        name: Value(nameDetails),
+      )
+    );
   }
+    // delete transaction
+  Future deleteTransactionRepo(int id) async {
+    return(delete(transactions)..where((tbl) => tbl.id.equals(id))).go();
+  }
+
 }
 
 LazyDatabase _openConnection() {

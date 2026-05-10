@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:my_app/models/database.dart';
+import 'package:my_app/models/transaction_width_category.dart';
 import 'package:my_app/pages/transaction_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,6 +25,12 @@ class _HomePageState extends State<HomePage> {
             Padding(
               padding: const EdgeInsets.all(16),
               child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Color.fromARGB(255, 224, 173, 190),
+                  borderRadius: BorderRadius.circular(16),
+              ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -31,7 +38,7 @@ class _HomePageState extends State<HomePage> {
                       Row(
                         children: [
                           Container(
-                            child: Icon(Icons.download, color: const Color.fromARGB(255, 120, 218, 118)),
+                            child: Icon(Icons.download, color: Colors.green),
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 255, 253, 253),
                               borderRadius: BorderRadius.circular(8))
@@ -43,7 +50,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                                 Text(
-                                  "Income",
+                                  "Pemasukan",
                                   style: GoogleFonts.montserrat(
                                     color: Colors.white, fontSize: 12,fontWeight: FontWeight.bold
                                   ),
@@ -62,7 +69,7 @@ class _HomePageState extends State<HomePage> {
                       Row(
                         children: [
                           Container(
-                            child: Icon(Icons.upload, color: const Color.fromARGB(255, 200, 99, 71)),
+                            child: Icon(Icons.upload, color: Colors.red),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(8))
@@ -74,7 +81,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                                 Text(
-                                  "Expense",
+                                  "Pengeluaran",
                                   style: GoogleFonts.montserrat(
                                     color: Colors.white, fontSize: 12,fontWeight: FontWeight.bold
                                   ),
@@ -91,27 +98,21 @@ class _HomePageState extends State<HomePage> {
                       ]
                       ),
                   ]),
-
-              width: double.infinity,
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Color.fromARGB(255, 224, 173, 190),
-                borderRadius: BorderRadius.circular(16),
-              ),
             )
           ),
 
           // transaction history
           Padding(
             padding:  EdgeInsets.all(10),
-            child: Text("Transaction History",
+            child: Text("Transaksi",
             style: GoogleFonts.montserrat(
                fontSize: 16, fontWeight: FontWeight.bold,
             ),),
           ),
 
           // menampilkan di transaksi home
-          StreamBuilder(stream: database.getTransactionByDate(widget.selectedDate), 
+          StreamBuilder<List<TransactionWidthCategory>>(
+            stream: database.getTransactionByDate(widget.selectedDate), 
           builder: (context, snapshot) {
             if(snapshot.connectionState == ConnectionState.waiting) {
               return Center(
@@ -123,67 +124,90 @@ class _HomePageState extends State<HomePage> {
                 return ListView.builder(
                   // shrinkWrap berfungsi untuk membuat listview tidak mengambil semua ruang yang tersedia
                   shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
+                  // bouncingScrollPhysics berfungsi untuk memberikan efek bouncing saat scroll
+                  physics: BouncingScrollPhysics(),
                   itemCount: snapshot.data!.length,
+                  // reverse berfungsi untuk membalik urutan data yang ditampilkan
+                  reverse: true,
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Card(
                         elevation: 10,
                         child: ListTile(
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(onPressed: (){}, icon: Icon( Icons.delete)),
-                              SizedBox(width: 10,),
-                              IconButton( 
-                                icon: Icon(Icons.edit), 
-                                onPressed: (){
-                                Navigator.of( context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => TransactionPage(
-                                      transactionWidthCategory: 
-                                        snapshot.data![index],
-                                    )
-                                  )
-                                );}
-                              )
-                            ],
-                          ),
-                        
-                          title: Text("Rp." + 
-                          snapshot.data![index].transaction.amount
-                            .toString()),
-                          subtitle: Text(
-                            snapshot.data![index].category.name+" ("+snapshot.data![index].transaction.name+")"),
-                          // kegunaan leading untuk menampilkan icon di depan title dan subtitle
-                          leading: Container(
-                            child: (snapshot.data![index].category.type == 2)
-                              ? Icon( Icons.upload, color: const Color.fromARGB(255, 200, 99, 71))
-                              : Icon( Icons.download, color: const Color.fromARGB(255, 120, 218, 118)),
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 255, 253, 253),
-                              borderRadius: BorderRadius.circular(8))
-                          ),
-                        ),
-                      ),
+                          title: Text(
+                                    'Rp. ${snapshot.data![index].transaction.amount}'),
+                                subtitle: Text(
+                                    '${snapshot.data![index].category.name} - ${snapshot.data![index].transaction.name} '),
+                                leading: Container(
+                                  decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8)),
+                                  child: Icon(
+                                    snapshot.data![index].category.type == 2
+                                        ? Icons.upload
+                                        : Icons.download,
+                                    color:
+                                        snapshot.data![index].category.type == 2
+                                            ? Colors.red
+                                            : Colors.green,
+                                  ),
+                                ),
+                           trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                        onPressed: () {
+                                          database.deleteTransactionRepo(
+                                              snapshot
+                                                  .data![index].transaction.id);
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                  'Berhasil menghapus data'),
+                                            ),
+                                          );
+                                          setState(() {});
+                                        },
+                                        icon: Icon(Icons.delete)),
+                                    const SizedBox(width: 10),
+                                    IconButton(
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                TransactionPage(
+                                              transactionWidthCategory:
+                                                  snapshot.data![index],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: Icon(Icons.edit),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return Center(
+                        child: Text('Tidak ada data..!'),
+                      );
+                    }
+                  } else {
+                    return Center(
+                      child: Text('Tidak ada data..!'),
                     );
-                  },
-                );
-                } else {
-                  return Center(
-                    child: Text("data kosong"),
-                  );
-                }  
-              } else {
-                return Center(
-                  child: Text("tidak ada data"),
-                );
-              }
-            }
-          }),
-        ]
-      )
+                  }
+                }
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
