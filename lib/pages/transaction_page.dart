@@ -1,219 +1,701 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:my_app/models/transaction_width_category.dart';
-import '../models/database.dart';
 
 class TransactionPage extends StatefulWidget {
-  final TransactionWidthCategory? transactionWidthCategory;
-  const TransactionPage({Key? key, required this.transactionWidthCategory}) :
-    super(key: key);
+
+  // FIREBASE DOC ID
+  final String? docId;
+
+  const TransactionPage({
+    super.key,
+    this.docId,
+  });
 
   @override
-  State<TransactionPage> createState() => _TransactionPageState();
+  State<TransactionPage> createState() =>
+      _TransactionPageState();
 }
 
-class _TransactionPageState extends State<TransactionPage> {
-  final AppDb database = AppDb();
+class _TransactionPageState
+    extends State<TransactionPage> {
+
+  // ================= FIREBASE =================
+  final FirebaseFirestore firestore =
+      FirebaseFirestore.instance;
+
+  // ================= SWITCH =================
   bool isExpense = true;
-  late int type;
-  List<String> list = ['Makan dan Jajan', 'Transportasi', 'film'];
-  late String dropDownValue = list.first;
-  TextEditingController dateController =TextEditingController();
-  TextEditingController detailController = TextEditingController();
-  TextEditingController amountController = TextEditingController();
-  Category? selectedCategory;
-  // insert transaction ke database
-  Future insert(
-    int amount, DateTime date, String newDetail, int categoryId) async {
-    DateTime now = DateTime.now();
-    final row = await database.into(database.transactions).insertReturning(
-      TransactionsCompanion.insert(
-        name: newDetail, category_Id: categoryId, transaction_date: date, amount: amount, createdAt: now, updatedAt: now));
-    print('Masuk :' + row.toString());
+
+  // ================= TYPE =================
+  int type = 2;
+
+  // ================= CONTROLLER =================
+  final TextEditingController
+      amountController =
+      TextEditingController();
+
+  final TextEditingController
+      detailController =
+      TextEditingController();
+
+  final TextEditingController
+      dateController =
+      TextEditingController();
+
+  // ================= CATEGORY =================
+  String? selectedCategoryId;
+  String? selectedCategoryName;
+
+  // ================= INSERT =================
+  Future<void> insertTransaction() async {
+
+    try {
+
+      await firestore
+          .collection('transactions')
+          .add({
+
+        'amount':
+            int.parse(
+          amountController.text,
+        ),
+
+        'detail':
+            detailController.text,
+
+        'categoryId':
+            selectedCategoryId,
+
+        'category_name':
+            selectedCategoryName,
+
+        'type':
+            type,
+
+        'date':
+            Timestamp.fromDate(
+          DateTime.parse(
+            dateController.text,
+          ),
+        ),
+
+        'createdAt':
+            Timestamp.now(),
+
+        'updatedAt':
+            Timestamp.now(),
+      });
+
+      if (mounted) {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          const SnackBar(
+            content: Text(
+              'Transaction berhasil disimpan',
+            ),
+          ),
+        );
+      }
+    }
+
+    catch (e) {
+
+      debugPrint(
+        e.toString(),
+      );
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        SnackBar(
+          content: Text(
+            'Error: $e',
+          ),
+        ),
+      );
+    }
   }
 
-  Future<List<Category>> getAllCategory(int type) async {
-    return await database.getAllCategoryRepo(type);
+  // ================= UPDATE =================
+  Future<void> updateTransaction() async {
+
+    try {
+
+      await firestore
+          .collection('transactions')
+          .doc(widget.docId)
+          .update({
+
+        'amount':
+            int.parse(
+          amountController.text,
+        ),
+
+        'detail':
+            detailController.text,
+
+        'categoryId':
+            selectedCategoryId,
+
+        'category_name':
+            selectedCategoryName,
+
+        'type':
+            type,
+
+        'date':
+            Timestamp.fromDate(
+          DateTime.parse(
+            dateController.text,
+          ),
+        ),
+
+        'updatedAt':
+            Timestamp.now(),
+      });
+
+      if (mounted) {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          const SnackBar(
+            content: Text(
+              'Transaction berhasil diupdate',
+            ),
+          ),
+        );
+      }
+    }
+
+    catch (e) {
+
+      debugPrint(
+        e.toString(),
+      );
+    }
   }
 
-  Future update( int id, int amount, int categoryId, DateTime transactionDate, String nameDetails) async {
-    return await database.updateTransactionRepo(
-      id, amount, categoryId, transactionDate, nameDetails);
+  // ================= GET TRANSACTION =================
+  Future<void> getTransactionDetail() async {
+
+    if (widget.docId == null) return;
+
+    try {
+
+      final doc =
+          await firestore
+              .collection('transactions')
+              .doc(widget.docId)
+              .get();
+
+      if (!doc.exists) return;
+
+      final data =
+          doc.data();
+
+      if (data == null) return;
+
+      amountController.text =
+          data['amount']
+              .toString();
+
+      detailController.text =
+          data['detail'] ?? '';
+
+      selectedCategoryId =
+          data['categoryId'];
+
+      selectedCategoryName =
+          data['category_name'];
+
+      type =
+          data['type'] ?? 2;
+
+      isExpense =
+          type == 2;
+
+      Timestamp timestamp =
+          data['date'];
+
+      DateTime date =
+          timestamp.toDate();
+
+      dateController.text =
+          DateFormat(
+            'yyyy-MM-dd',
+          ).format(date);
+
+      setState(() {});
+    }
+
+    catch (e) {
+
+      debugPrint(
+        e.toString(),
+      );
+    }
   }
-  // override initState untuk menginisialisasi nilai type berdasarkan isExpense
+
+  // ================= INIT =================
   @override
   void initState() {
-    if (widget.transactionWidthCategory != null){
-      updateTransactionView(widget, widget.transactionWidthCategory!);
-    } else {
-      type = isExpense ? 2 : 1;
-    }
-    
-      super.initState();
+
+    super.initState();
+
+    dateController.text =
+        DateFormat(
+          'yyyy-MM-dd',
+        ).format(
+          DateTime.now(),
+        );
+
+    getTransactionDetail();
   }
 
-  void updateTransactionView(TransactionPage widget, TransactionWidthCategory transactionWidthCategory) async {
-    amountController.text = 
-      transactionWidthCategory.transaction.amount.toString();
-    dateController.text = 
-      DateFormat('yyyy-MM-dd').format(transactionWidthCategory.transaction.transaction_date);
-    detailController.text = transactionWidthCategory.transaction.name;
-    type = transactionWidthCategory.category.type;
-    (type == 2) ? isExpense = true : isExpense = false;
-    selectedCategory = transactionWidthCategory.category;
+  // ================= DISPOSE =================
+  @override
+  void dispose() {
+
+    amountController.dispose();
+
+    detailController.dispose();
+
+    dateController.dispose();
+
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Add Transaction")),
-      body: SingleChildScrollView(
-        child: SafeArea(
-            child: Column(
-              // crossAxis untuk mengatur perataan pada kiri kanan
-              // mainAxisAlignment atas bawah
-              crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Switch(
-                  value: isExpense, 
-                  onChanged: (bool value) {
-                    setState(() {
-                      isExpense = value;
-                      type = (isExpense) ? 2 : 1;
-                      selectedCategory = null;
-                    });
-                  } , 
-                  // innactiveTrackColor untuk warna track saat switch dalam keadaan off, inactiveThumbColor untuk warna thumb saat switch dalam keadaan off, activeColor untuk warna thumb saat switch dalam keadaan on
-                  inactiveTrackColor: const Color.fromARGB(255, 198, 235, 198), 
-                  inactiveThumbColor: const Color.fromARGB(255, 120, 218, 118),
-                  // activecolor untuk warna thumb saat switch dalam keadaan on
-                  activeThumbColor: const Color.fromARGB(255, 200, 99, 71),
-                ),
-                Text(isExpense ? 'Expense' :'Income', 
-                style: GoogleFonts.montserrat(fontSize: 14),)
-              ],
-            ),
-            SizedBox(height: 10,),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextFormField(
-                keyboardType: TextInputType.number,
-                controller: amountController,
-                decoration: InputDecoration(
-                  border: UnderlineInputBorder(),
-                  labelText: "Amount"),
-              ),
-            ),
-            SizedBox(height: 25,),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
 
-              child: Text('Category', 
-                  style: GoogleFonts.montserrat(fontSize: 16,),),
-            ),
-            FutureBuilder<List<Category>>(
-              future: getAllCategory(isExpense ? 2 : 1), 
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                } else {
-                  if (snapshot.hasData) {
-                    if (snapshot.data!.length > 0){
-                      selectedCategory = (selectedCategory == null) 
-                      ? snapshot.data!.first 
-                      : selectedCategory;
-                      print('Masuk :' + snapshot.data.toString());
-                      return  Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: DropdownButton<Category>(
-                          value: (selectedCategory == null) 
-                          ? snapshot.data!.first 
-                          : selectedCategory,
-                          isExpanded: true,
-                          icon: Icon(Icons.arrow_downward),
-                          items: (snapshot.data!).map((Category item){
-                            return DropdownMenuItem<Category>(
-                              value: item, 
-                              child: Text(item.name),
-                            );
-                          }).toList(),
-                          // onChanged untuk menangani perubahan nilai dropdown
-                          onChanged: (Category ? value){
-                            setState(() {
-                              selectedCategory = value;
-                            });
-                          },
-                        ),
-                      );
-                    } else {
-                      return Center(child: Text("data kosong"));
-                      }
-                  } else {return Center(
-                      child: Text("tidak ada data"),
+    return Scaffold(
+
+      appBar: AppBar(
+
+        title: Text(
+
+          widget.docId == null
+              ? 'Add Transaction'
+              : 'Edit Transaction',
+        ),
+      ),
+
+      body: SingleChildScrollView(
+
+        child: SafeArea(
+
+          child: Column(
+
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+
+            children: [
+
+              // ================= SWITCH =================
+              Row(
+
+                children: [
+
+                  Switch(
+
+                    value: isExpense,
+
+                    onChanged: (value) {
+
+                      setState(() {
+
+                        isExpense =
+                            value;
+
+                        type =
+                            isExpense
+                                ? 2
+                                : 1;
+
+                        selectedCategoryId =
+                            null;
+
+                        selectedCategoryName =
+                            null;
+                      });
+                    },
+
+                    activeThumbColor:
+                        Colors.red,
+
+                    inactiveThumbColor:
+                        Colors.green,
+                  ),
+
+                  Text(
+
+                    isExpense
+                        ? 'Expense'
+                        : 'Income',
+
+                    style:
+                        GoogleFonts.montserrat(
+
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(
+                height: 10,
+              ),
+
+              // ================= AMOUNT =================
+              Padding(
+
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 16,
+                ),
+
+                child: TextFormField(
+
+                  keyboardType:
+                      TextInputType.number,
+
+                  controller:
+                      amountController,
+
+                  decoration:
+                      const InputDecoration(
+
+                    border:
+                        UnderlineInputBorder(),
+
+                    labelText:
+                        "Amount",
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                height: 25,
+              ),
+
+              // ================= CATEGORY =================
+              Padding(
+
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 16,
+                ),
+
+                child: Text(
+
+                  'Category',
+
+                  style:
+                      GoogleFonts.montserrat(
+
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+
+              StreamBuilder<QuerySnapshot>(
+
+                stream: firestore
+                    .collection(
+                      'categories',
+                    )
+                    .where(
+                      'type',
+                      isEqualTo: type,
+                    )
+                    .snapshots(),
+
+                builder:
+                    (context, snapshot) {
+
+                  // LOADING
+                  if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+
+                    return const Center(
+                      child:
+                          CircularProgressIndicator(),
                     );
                   }
-                }
-              }),
-            SizedBox( height: 25,),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                // readonly digunakan agar date tidak bisa diedit
-                readOnly: true,
-                controller: dateController,
-                decoration: InputDecoration(labelText: "Enter Date"),
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context, 
-                    initialDate:DateTime.now(), 
-                    firstDate: DateTime.now().subtract(const Duration(days: 140)),
-                    lastDate: DateTime.now()
-                  );
-                    if (pickedDate != null){
-                      String formatedDate = 
-                        DateFormat('yyyy-MM-dd').format(pickedDate);
 
-                      dateController.text =formatedDate;
+                  // ERROR
+                  if (snapshot.hasError) {
+
+                    return Center(
+
+                      child: Text(
+                        snapshot.error
+                            .toString(),
+                      ),
+                    );
+                  }
+
+                  // DATA
+                  final docs =
+                      snapshot.data?.docs ??
+                          [];
+
+                  // EMPTY
+                  if (docs.isEmpty) {
+
+                    return const Padding(
+
+                      padding:
+                          EdgeInsets.all(16),
+
+                      child: Text(
+                        'Category kosong',
+                      ),
+                    );
+                  }
+
+                  // DEFAULT CATEGORY
+                  selectedCategoryId ??=
+                      docs.first.id;
+
+                  selectedCategoryName ??=
+                      (docs.first.data()
+                              as Map<String,
+                                  dynamic>)['name'];
+
+                  return Padding(
+
+                    padding:
+                        const EdgeInsets.symmetric(
+                      horizontal: 16,
+                    ),
+
+                    child:
+                        DropdownButton<String>(
+
+                      value:
+                          selectedCategoryId,
+
+                      isExpanded: true,
+
+                      items:
+                          docs.map((item) {
+
+                        final data =
+                            item.data()
+                                as Map<String,
+                                    dynamic>;
+
+                        return DropdownMenuItem<String>(
+
+                          value:
+                              item.id,
+
+                          child: Text(
+                            data['name'],
+                          ),
+                        );
+                      }).toList(),
+
+                      onChanged: (value) {
+
+                        setState(() {
+
+                          selectedCategoryId =
+                              value;
+
+                          final selected =
+                              docs.firstWhere(
+                            (e) =>
+                                e.id ==
+                                value,
+                          );
+
+                          selectedCategoryName =
+                              (selected.data()
+                                      as Map<String,
+                                          dynamic>)['name'];
+                        });
+                      },
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(
+                height: 25,
+              ),
+
+              // ================= DATE =================
+              Padding(
+
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 16,
+                ),
+
+                child: TextField(
+
+                  readOnly: true,
+
+                  controller:
+                      dateController,
+
+                  decoration:
+                      const InputDecoration(
+                    labelText:
+                        "Enter Date",
+                  ),
+
+                  onTap: () async {
+
+                    DateTime? pickedDate =
+                        await showDatePicker(
+
+                      context:
+                          context,
+
+                      initialDate:
+                          DateTime.now(),
+
+                      firstDate:
+                          DateTime.now()
+                              .subtract(
+                        const Duration(
+                          days: 365,
+                        ),
+                      ),
+
+                      lastDate:
+                          DateTime.now(),
+                    );
+
+                    if (pickedDate != null) {
+
+                      dateController.text =
+                          DateFormat(
+                            'yyyy-MM-dd',
+                          ).format(
+                            pickedDate,
+                          );
                     }
-                }
+                  },
+                ),
               ),
-            ),
-            SizedBox(height: 10,),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextFormField(
-                controller: detailController,
-                decoration: InputDecoration(
-                  border: UnderlineInputBorder(),
-                labelText: "Details"),
+
+              const SizedBox(
+                height: 10,
               ),
-            ),
-            SizedBox(height: 25),
-            Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  (widget.transactionWidthCategory == null) 
-              ? insert(
-                  int.parse(amountController.text), 
-                  DateTime.parse(dateController.text), 
-                  detailController.text, 
-                  selectedCategory!.id) 
-              : await update(
-                  // kegunaan ! untuk memastikan bahwa nilai tidak null, 
-                  widget.transactionWidthCategory!.transaction.id, 
-                  int.parse(amountController.text),
-                  selectedCategory!.id,
-                  DateTime.parse(dateController.text),
-                  detailController.text
-              );
-                // setelah insert data, kembali ke halaman sebelumnya
-              Navigator.pop(context, true);
-            }, child: Text("Save")),)
-          ],
-      ))),
-      );
+
+              // ================= DETAIL =================
+              Padding(
+
+                padding:
+                    const EdgeInsets.symmetric(
+                  horizontal: 16,
+                ),
+
+                child: TextFormField(
+
+                  controller:
+                      detailController,
+
+                  decoration:
+                      const InputDecoration(
+
+                    border:
+                        UnderlineInputBorder(),
+
+                    labelText:
+                        "Details",
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                height: 25,
+              ),
+
+              // ================= SAVE BUTTON =================
+              Center(
+
+                child: ElevatedButton(
+
+                  onPressed: () async {
+
+                    // VALIDASI
+                    if (amountController
+                        .text
+                        .isEmpty) {
+
+                      ScaffoldMessenger.of(
+                              context)
+                          .showSnackBar(
+
+                        const SnackBar(
+                          content: Text(
+                            'Amount wajib diisi',
+                          ),
+                        ),
+                      );
+
+                      return;
+                    }
+
+                    if (dateController
+                        .text
+                        .isEmpty) {
+
+                      ScaffoldMessenger.of(
+                              context)
+                          .showSnackBar(
+
+                        const SnackBar(
+                          content: Text(
+                            'Tanggal wajib diisi',
+                          ),
+                        ),
+                      );
+
+                      return;
+                    }
+
+                    // INSERT
+                    if (widget.docId ==
+                        null) {
+
+                      await insertTransaction();
+                    }
+
+                    // UPDATE
+                    else {
+
+                      await updateTransaction();
+                    }
+
+                    if (mounted) {
+
+                      Navigator.pop(
+                        context,
+                        true,
+                      );
+                    }
+                  },
+
+                  child: const Text(
+                    "Save",
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

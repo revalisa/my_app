@@ -236,7 +236,7 @@ class _CategoryPageState
                 decoration: InputDecoration(
 
                   hintText:
-                      "Nama Category",
+                      " Category",
 
                   border:
                       OutlineInputBorder(
@@ -289,7 +289,7 @@ class _CategoryPageState
 
                         const SnackBar(
                           content: Text(
-                            'Nama category wajib diisi',
+                            '  category wajib diisi',
                           ),
                         ),
                       );
@@ -369,15 +369,6 @@ class _CategoryPageState
   Widget build(BuildContext context) {
 
     return Scaffold(
-
-      backgroundColor: Colors.grey[100],
-
-      appBar: AppBar(
-        title: const Text(
-          'Category',
-        ),
-      ),
-
       body: SafeArea(
 
         child: Column(

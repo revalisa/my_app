@@ -1,101 +1,261 @@
 import 'package:flutter/material.dart';
 import 'package:calendar_appbar/calendar_appbar.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:my_app/pages/category_page.dart';
-import 'package:my_app/pages/home.page.dart';
+import 'package:my_app/pages/home_page.dart';
 import 'package:my_app/pages/transaction_page.dart';
 
 class MainPages extends StatefulWidget {
-  const MainPages({super.key});
-  
+
+  const MainPages({
+    super.key,
+  });
+
   @override
-  State<MainPages> createState() => _MainPagesState();
+  State<MainPages> createState() =>
+      _MainPagesState();
 }
 
-class _MainPagesState extends State<MainPages> {
-  late DateTime selectedDate;
-  // late artinya variabel yang akan digunakan nanti, tapi belum diinisialisasi sekarang
-  late List<Widget> _children ;
-  // fungsi untuk menyimpan halaman yang akan ditampilkan ketika user menekan icon di bottom navigation bar
-  late int currentIndex = 0;
+class _MainPagesState
+    extends State<MainPages> {
 
+  // ================= DATE =================
+  late DateTime selectedDate;
+
+  // ================= INDEX =================
+  int currentIndex = 0;
+
+  // ================= CHILDREN =================
+  late List<Widget> children;
+
+  // ================= INIT =================
   @override
   void initState() {
-    updateView(0, DateTime.now());
+
     super.initState();
+
+    selectedDate = DateTime.now();
+
+    updateView();
   }
 
-  void updateView(int index, DateTime date) {
-    setState(() {
-      if (date != true) {
-      selectedDate = DateTime.parse(DateFormat('yyyy-MM-dd').format(date));
-      } 
-      currentIndex = index;
-      _children = [
-        HomePage(selectedDate: selectedDate),
-        CategoryPage()
-      ];
-    });
+  // ================= UPDATE VIEW =================
+  void updateView() {
+
+    children = [
+
+      // HOME
+      HomePage(
+        selectedDate: selectedDate,
+      ),
+
+      // CATEGORY
+      const CategoryPage(),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      appBar: currentIndex == 0 
-      ? CalendarAppBar(
-        accent: const Color.fromARGB(255, 147, 45, 79),
-        backButton: false,
-        locale: 'id',
-        onDateChanged: (value) {
-          setState(() {
-            selectedDate = value;
-            updateView(0, selectedDate);
-          });
-        },
-        firstDate: DateTime.now().subtract(const Duration(days: 140)),
-        lastDate: DateTime.now(),
 
-      ) : PreferredSize(
-        child: Container(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
-            child: Text("Category", style: GoogleFonts.montserrat(fontSize: 25, fontWeight: FontWeight.bold),),
-          )), 
-          // preferredSize untuk menentukan tinggi appbar ketika user berada di halaman category
-          preferredSize: Size.fromHeight(200)),
+      // ================= APPBAR =================
+      appBar:
+          currentIndex == 0
 
-      floatingActionButton: Visibility(
-        visible: currentIndex == 0 ? true : false,
-        child: FloatingActionButton(
-          onPressed:(){
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => TransactionPage(transactionWidthCategory: null,),
-            ))
-            .then((value) {
-              setState(() {});
-            }); 
-          },
-          backgroundColor: const Color.fromARGB(255, 222, 131, 161),
-          child: Icon(Icons.add, color: Colors.white,),
+              // HOME APPBAR
+              ? CalendarAppBar(
+
+                  accent:
+                      const Color.fromARGB(
+                    255,
+                    147,
+                    45,
+                    79,
+                  ),
+
+                  backButton: false,
+
+                  locale: 'id',
+
+                  onDateChanged: (value) {
+
+                    setState(() {
+
+                      selectedDate = value;
+
+                      updateView();
+                    });
+                  },
+
+                  firstDate:
+                      DateTime.now().subtract(
+
+                    const Duration(
+                      days: 365,
+                    ),
+                  ),
+
+                  lastDate:
+                      DateTime.now(),
+                )
+
+              // CATEGORY APPBAR
+              : PreferredSize(
+
+                  preferredSize:
+                      const Size.fromHeight(
+                    100,
+                  ),
+
+                  child: Container(
+
+                    padding:
+                        const EdgeInsets.only(
+                      top: 50,
+                      left: 16,
+                    ),
+
+                    alignment:
+                        Alignment.centerLeft,
+
+                    child: Text(
+
+                      "Category",
+
+                      style:
+                          GoogleFonts.montserrat(
+
+                        fontSize: 25,
+
+                        fontWeight:
+                            FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
+      // ================= FLOATING BUTTON =================
+      floatingActionButton:
+          currentIndex == 0
+
+              ? FloatingActionButton(
+
+                  backgroundColor:
+                      const Color.fromARGB(
+                    255,
+                    222,
+                    131,
+                    161,
+                  ),
+
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                  ),
+
+                  onPressed: () {
+
+                    Navigator.of(context)
+                        .push(
+
+                      MaterialPageRoute(
+
+                        builder: (context) =>
+                            const TransactionPage(),
+                      ),
+                    )
+                        .then((value) {
+
+                      setState(() {
+
+                        updateView();
+                      });
+                    });
+                  },
+                )
+
+              : null,
+
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation
+              .centerDocked,
+
+      // ================= BODY =================
+      body: children[currentIndex],
+
+      // ================= BOTTOM NAVIGATION =================
+      bottomNavigationBar: BottomAppBar(
+
+        color:
+            const Color.fromARGB(
+          255,
+          208,
+          170,
+          182,
+        ),
+
+        child: Row(
+
+          mainAxisAlignment:
+              MainAxisAlignment.spaceEvenly,
+
+          children: [
+
+            // HOME
+            IconButton(
+
+              onPressed: () {
+
+                setState(() {
+
+                  currentIndex = 0;
+
+                  updateView();
+                });
+              },
+
+              icon: Icon(
+
+                Icons.home,
+
+                color:
+                    currentIndex == 0
+                        ? Colors.white
+                        : Colors.black,
+              ),
+            ),
+
+            const SizedBox(
+              width: 20,
+            ),
+
+            // CATEGORY
+            IconButton(
+
+              onPressed: () {
+
+                setState(() {
+
+                  currentIndex = 1;
+
+                  updateView();
+                });
+              },
+
+              icon: Icon(
+
+                Icons.list,
+
+                color:
+                    currentIndex == 1
+                        ? Colors.white
+                        : Colors.black,
+              ),
+            ),
+          ],
         ),
       ),
-      body: _children[currentIndex],
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        color: const Color.fromARGB(255, 208, 170, 182),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-        IconButton(onPressed:(){
-          updateView(0, DateTime.now());
-        }, icon: Icon(Icons.home)),
-        SizedBox(
-          width: 20,
-        ),
-        IconButton(onPressed:(){
-          updateView(1, DateTime.now());
-        }, icon: Icon(Icons.list)),
-      ],),),
     );
   }
 }
