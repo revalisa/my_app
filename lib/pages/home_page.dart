@@ -161,14 +161,34 @@ class _HomePageState
             StreamBuilder<QuerySnapshot>(
 
           stream: firestore
-              .collection(
-                'transactions',
-              )
-              .orderBy(
-                'date',
-                descending: true,
-              )
-              .snapshots(),
+            .collection('transactions')
+            .where(
+              'date',
+              isGreaterThanOrEqualTo:
+                  Timestamp.fromDate(
+                DateTime(
+                  widget.selectedDate.year,
+                  widget.selectedDate.month,
+                  widget.selectedDate.day,
+                ),
+              ),
+            )
+            .where(
+              'date',
+              isLessThan:
+                  Timestamp.fromDate(
+                DateTime(
+                  widget.selectedDate.year,
+                  widget.selectedDate.month,
+                  widget.selectedDate.day + 1,
+                ),
+              ),
+            )
+            .orderBy(
+              'date',
+              descending: true,
+            )
+            .snapshots(),
 
           builder:
               (context, snapshot) {
