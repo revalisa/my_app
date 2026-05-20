@@ -1,203 +1,764 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; 
-import '../models/database.dart'; 
-
+import 'package:google_fonts/google_fonts.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
 
   @override
-  State<CategoryPage> createState() => _CategoryPageState();
+  State<CategoryPage> createState() =>
+      _CategoryPageState();
 }
 
-class _CategoryPageState extends State<CategoryPage> {
+class _CategoryPageState
+    extends State<CategoryPage> {
+
+  // ================= FIREBASE =================
+  final FirebaseFirestore firestore =
+      FirebaseFirestore.instance;
+
+  // ================= SWITCH =================
   bool isExpense = true;
+
+  // ================= TYPE =================
   int type = 2;
-  final AppDb database = AppDb();
-  TextEditingController categoryNameController = TextEditingController();
 
-  Future insert(String name, int type) async {
-    DateTime now = DateTime.now();
-    final row = await database.into(database.categories).insertReturning(
-      CategoriesCompanion.insert(
-        name: name, type: type, createdAt: now, updatedAt: now));
-    print('Masuk :' + row.toString());
-  }
+  // ================= CONTROLLER =================
+  final TextEditingController
+      categoryNameController =
+      TextEditingController();
 
-  Future<List<Category>> getAllCategory(int type) async {
-    return await database.getAllCategoryRepo(type);
-  }
+  // ================= INSERT =================
+  Future<void> insertCategory(
+    String name,
+    int type,
+  ) async {
 
-  Future updateCategory(int categoryId, String NewName) async {
-   return await database.updateCategoryRepo(categoryId, NewName);
-  }
+    try {
 
-  void openCategoryDialog(Category? category) {
-    if (category != null) {
-      categoryNameController.text = category.name;
-    } ;
-    showDialog(
-      context: context, 
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Add Category"),
-          content: SingleChildScrollView(
-            child: Center(
-              child: Column(
-                children: [
-                  Text(
-                    (isExpense) 
-                    ? "Add Expense" 
-                    :"Add Income", 
-                    style: GoogleFonts.montserrat(fontSize:18, fontWeight: FontWeight.bold,
-                    color: (isExpense) 
-                    ? Color.fromARGB(255, 200, 99, 71)
-                    : Color.fromARGB(255, 96, 196, 94))
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  TextFormField(
-                    controller: categoryNameController,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(), hintText: "Category Name",), 
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  ElevatedButton(onPressed: (){
-                    if( category == null) {
-                      insert(categoryNameController.text, isExpense ? 2 : 1);// insert category
-                    }
-                    else {
-                      updateCategory(category.id, categoryNameController.text);
-                      // update category
-                    }
-                    Navigator.of(context, rootNavigator: true)
-                    .pop('dialog');
-                    categoryNameController.clear();
-                    setState(() {});
-                  }, 
-                  child: Text("Save"))
-                ],
-              )
+      await firestore
+          .collection('categories')
+          .add({
+
+        'name': name,
+        'type': type,
+
+        // gunakan Timestamp firebase
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      });
+
+      if (mounted) {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          const SnackBar(
+            content: Text(
+              'Category berhasil ditambahkan',
             ),
           ),
         );
       }
-    );
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16,),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Switch(
-                  value: isExpense, 
-                  onChanged: (bool value) {
-                    setState(() {
-                      isExpense = value;
-                      type = value ? 2 : 1;
-                    });
-                  } , 
-                  // innactiveTrackColor untuk warna track saat switch dalam keadaan off, inactiveThumbColor untuk warna thumb saat switch dalam keadaan off, activeColor untuk warna thumb saat switch dalam keadaan on
-                  inactiveTrackColor: const Color.fromARGB(255, 183, 232, 185), 
-                  inactiveThumbColor: Colors.green,
-                  // activecolor untuk warna thumb saat switch dalam keadaan on
-                  activeThumbColor: Colors.red,
-                ),
-                IconButton(onPressed: () {
-                  openCategoryDialog(null);
-                }, icon: Icon(Icons.add)),
-              ],
+    }
+
+    catch (e) {
+
+      debugPrint(e.toString());
+
+      if (mounted) {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          SnackBar(
+            content: Text(
+              'Error: $e',
             ),
           ),
-          FutureBuilder<List<Category>>(
-            future: getAllCategory(type),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              } else {
-                // jika ada datanya
-                if (snapshot.hasData) {
-                  if (snapshot.data!.length > 0) {
-                    return ListView.builder(
-                      // shrinkWrap untuk mengatur ukuran ListView sesuai dengan jumlah item yang ada, 
-                      //reverse untuk membalik urutan item dalam ListView, 
-                      //physics untuk mengatur perilaku scroll pada ListView
-                      shrinkWrap: true,
-                      reverse: true,
-                      physics: BouncingScrollPhysics(),
-                      itemCount: snapshot.data?.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Card(
-                            elevation: 10,
-                            child: ListTile(
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(Icons.delete),
-                                      onPressed: () {
-                                        database.deleteCategoryRepo(
-                                          snapshot.data![index].id
-                                        ).then((_) {
-                                          setState(() {});
-                                        });
-                                      },
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.edit),
-                                      onPressed: () {
-                                        openCategoryDialog(snapshot.data![index]);
-                                      },
-                                    )
-                                  ],
-                                ),
-                                leading: Container(
-                                    padding: EdgeInsets.all(3),
-                                    decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(8)),
-                                    child: (isExpense)
-                                        ? Icon(Icons.upload,
-                                            color: Colors.red)
-                                        : Icon(
-                                            Icons.download,
-                                            color: Colors.green,
-                                          )),
-                                title: Text(snapshot.data![index].name)),
+        );
+      }
+    }
+  }
+
+  // ================= UPDATE =================
+  Future<void> updateCategory(
+    String id,
+    String newName,
+  ) async {
+
+    try {
+
+      await firestore
+          .collection('categories')
+          .doc(id)
+          .update({
+
+        'name': newName,
+        'updatedAt': Timestamp.now(),
+      });
+
+      if (mounted) {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          const SnackBar(
+            content: Text(
+              'Category berhasil diupdate',
+            ),
+          ),
+        );
+      }
+    }
+
+    catch (e) {
+
+      debugPrint(e.toString());
+    }
+  }
+
+  // ================= DELETE =================
+  Future<void> deleteCategory(
+    String id,
+  ) async {
+
+    try {
+
+      await firestore
+          .collection('categories')
+          .doc(id)
+          .delete();
+
+      if (mounted) {
+
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+
+          const SnackBar(
+            content: Text(
+              'Category berhasil dihapus',
+            ),
+          ),
+        );
+      }
+    }
+
+    catch (e) {
+
+      debugPrint(e.toString());
+    }
+  }
+
+  // ================= DIALOG =================
+  void openCategoryDialog(
+    DocumentSnapshot? category,
+  ) {
+
+    // EDIT
+    if (category != null) {
+
+      final data =
+          category.data()
+              as Map<String, dynamic>;
+
+      categoryNameController.text =
+          data['name'] ?? '';
+    }
+
+    // ADD
+    else {
+
+      categoryNameController.clear();
+    }
+
+    showDialog(
+
+      context: context,
+
+      builder: (BuildContext context) {
+
+        return AlertDialog(
+
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(20),
+          ),
+
+          title: Text(
+
+            category == null
+                ? "Tambah Category"
+                : "Edit Category",
+
+            style:
+                GoogleFonts.montserrat(
+              fontWeight:
+                  FontWeight.bold,
+            ),
+          ),
+
+          content: Column(
+
+            mainAxisSize: MainAxisSize.min,
+
+            children: [
+
+              // TYPE TEXT
+              Text(
+
+                isExpense
+                    ? "Expense"
+                    : "Income",
+
+                style:
+                    GoogleFonts.montserrat(
+
+                  fontSize: 18,
+
+                  fontWeight:
+                      FontWeight.bold,
+
+                  color: isExpense
+                      ? Colors.red
+                      : Colors.green,
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // INPUT
+              TextFormField(
+
+                controller:
+                    categoryNameController,
+
+                decoration: InputDecoration(
+
+                  hintText:
+                      "Nama Category",
+
+                  border:
+                      OutlineInputBorder(
+
+                    borderRadius:
+                        BorderRadius.circular(
+                      14,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // BUTTON
+              SizedBox(
+
+                width: double.infinity,
+
+                child: ElevatedButton(
+
+                  style:
+                      ElevatedButton.styleFrom(
+
+                    backgroundColor:
+                        const Color.fromARGB(
+                      255,
+                      147,
+                      45,
+                      79,
+                    ),
+
+                    padding:
+                        const EdgeInsets.all(
+                      14,
+                    ),
+                  ),
+
+                  onPressed: () async {
+
+                    // VALIDASI
+                    if (categoryNameController
+                        .text
+                        .trim()
+                        .isEmpty) {
+
+                      ScaffoldMessenger.of(
+                              context)
+                          .showSnackBar(
+
+                        const SnackBar(
+                          content: Text(
+                            'Nama category wajib diisi',
                           ),
-                        );
-                      },
-                    );
-                  } else {
-                    return Center(
-                      child: Text('Tidak ada data..!!'),
+                        ),
+                      );
+
+                      return;
+                    }
+
+                    // INSERT
+                    if (category == null) {
+
+                      await insertCategory(
+
+                        categoryNameController
+                            .text
+                            .trim(),
+
+                        isExpense
+                            ? 2
+                            : 1,
+                      );
+                    }
+
+                    // UPDATE
+                    else {
+
+                      await updateCategory(
+
+                        category.id,
+
+                        categoryNameController
+                            .text
+                            .trim(),
+                      );
+                    }
+
+                    if (mounted) {
+
+                      Navigator.pop(context);
+                    }
+
+                    categoryNameController
+                        .clear();
+                  },
+
+                  child: Text(
+
+                    "Simpan",
+
+                    style:
+                        GoogleFonts.montserrat(
+
+                      color: Colors.white,
+
+                      fontWeight:
+                          FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ================= DISPOSE =================
+  @override
+  void dispose() {
+
+    categoryNameController.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+
+      backgroundColor: Colors.grey[100],
+
+      appBar: AppBar(
+        title: const Text(
+          'Category',
+        ),
+      ),
+
+      body: SafeArea(
+
+        child: Column(
+
+          children: [
+
+            // ================= HEADER =================
+            Padding(
+
+              padding:
+                  const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+
+              child: Row(
+
+                mainAxisAlignment:
+                    MainAxisAlignment
+                        .spaceBetween,
+
+                children: [
+
+                  // SWITCH
+                  Row(
+
+                    children: [
+
+                      Text(
+
+                        isExpense
+                            ? "Expense"
+                            : "Income",
+
+                        style:
+                            GoogleFonts
+                                .montserrat(
+
+                          fontWeight:
+                              FontWeight.bold,
+
+                          color: isExpense
+                              ? Colors.red
+                              : Colors.green,
+                        ),
+                      ),
+
+                      Switch(
+
+                        value: isExpense,
+
+                        onChanged: (value) {
+
+                          setState(() {
+
+                            isExpense = value;
+
+                            // FIX
+                            type = isExpense
+                                ? 2
+                                : 1;
+                          });
+                        },
+
+                        activeThumbColor:
+                            Colors.red,
+
+                        inactiveThumbColor:
+                            Colors.green,
+                      ),
+                    ],
+                  ),
+
+                  // ADD BUTTON
+                  FloatingActionButton.small(
+
+                    backgroundColor:
+                        const Color.fromARGB(
+                      255,
+                      147,
+                      45,
+                      79,
+                    ),
+
+                    onPressed: () {
+
+                      openCategoryDialog(
+                        null,
+                      );
+                    },
+
+                    child: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ================= LIST =================
+            Expanded(
+
+              child:
+                  StreamBuilder<QuerySnapshot>(
+
+                // FIX QUERY
+                stream: firestore
+                    .collection('categories')
+                    .where(
+                      'type',
+                      isEqualTo: type,
+                    )
+                    .snapshots(),
+
+                builder:
+                    (context, snapshot) {
+
+                  // LOADING
+                  if (snapshot
+                          .connectionState ==
+                      ConnectionState
+                          .waiting) {
+
+                    return const Center(
+                      child:
+                          CircularProgressIndicator(),
                     );
                   }
-                } else {
-                  return Center(
-                    child: Text('Tidak ada data..!!'),
+
+                  // ERROR
+                  if (snapshot.hasError) {
+
+                    return Center(
+
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                      ),
+                    );
+                  }
+
+                  // DATA
+                  final docs =
+                      snapshot.data?.docs ??
+                          [];
+
+                  // EMPTY
+                  if (docs.isEmpty) {
+
+                    return Center(
+
+                      child: Text(
+
+                        "Tidak ada category",
+
+                        style:
+                            GoogleFonts
+                                .montserrat(
+                          fontSize: 16,
+                        ),
+                      ),
+                    );
+                  }
+
+                  // LIST
+                  return ListView.builder(
+
+                    itemCount: docs.length,
+
+                    itemBuilder:
+                        (context, index) {
+
+                      final item =
+                          docs[index];
+
+                      final data =
+                          item.data()
+                              as Map<String,
+                                  dynamic>;
+
+                      return Padding(
+
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
+
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+
+                        child: Card(
+
+                          elevation: 3,
+
+                          shape:
+                              RoundedRectangleBorder(
+
+                            borderRadius:
+                                BorderRadius
+                                    .circular(
+                              18,
+                            ),
+                          ),
+
+                          child: ListTile(
+
+                            contentPadding:
+                                const EdgeInsets
+                                    .all(12),
+
+                            // ICON
+                            leading:
+                                CircleAvatar(
+
+                              backgroundColor:
+                                  isExpense
+                                      ? Colors.red
+                                          .shade100
+                                      : Colors
+                                          .green
+                                          .shade100,
+
+                              child: Icon(
+
+                                isExpense
+                                    ? Icons.upload
+                                    : Icons
+                                        .download,
+
+                                color:
+                                    isExpense
+                                        ? Colors
+                                            .red
+                                        : Colors
+                                            .green,
+                              ),
+                            ),
+
+                            // TITLE
+                            title: Text(
+
+                              // FIX NULL
+                              data['name'] ??
+                                  '-',
+
+                              style:
+                                  GoogleFonts
+                                      .montserrat(
+
+                                fontWeight:
+                                    FontWeight
+                                        .bold,
+                              ),
+                            ),
+
+                            // ACTION
+                            trailing: Row(
+
+                              mainAxisSize:
+                                  MainAxisSize
+                                      .min,
+
+                              children: [
+
+                                // DELETE
+                                IconButton(
+
+                                  onPressed:
+                                      () async {
+
+                                    bool? confirm =
+                                        await showDialog(
+
+                                      context:
+                                          context,
+
+                                      builder:
+                                          (_) {
+
+                                        return AlertDialog(
+
+                                          title:
+                                              const Text(
+                                            'Hapus Category',
+                                          ),
+
+                                          content:
+                                              const Text(
+                                            'Yakin ingin menghapus?',
+                                          ),
+
+                                          actions: [
+
+                                            TextButton(
+
+                                              onPressed:
+                                                  () {
+
+                                                Navigator.pop(
+                                                  context,
+                                                  false,
+                                                );
+                                              },
+
+                                              child:
+                                                  const Text(
+                                                'Batal',
+                                              ),
+                                            ),
+
+                                            TextButton(
+
+                                              onPressed:
+                                                  () {
+
+                                                Navigator.pop(
+                                                  context,
+                                                  true,
+                                                );
+                                              },
+
+                                              child:
+                                                  const Text(
+                                                'Hapus',
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+
+                                    if (confirm ==
+                                        true) {
+
+                                      await deleteCategory(
+                                        item.id,
+                                      );
+                                    }
+                                  },
+
+                                  icon:
+                                      const Icon(
+                                    Icons.delete,
+                                    color:
+                                        Colors
+                                            .red,
+                                  ),
+                                ),
+
+                                // EDIT
+                                IconButton(
+
+                                  onPressed:
+                                      () {
+
+                                    openCategoryDialog(
+                                      item,
+                                    );
+                                  },
+
+                                  icon:
+                                      const Icon(
+                                    Icons.edit,
+                                    color:
+                                        Colors
+                                            .blue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   );
-                }
-              }
-            },
-          )
-        ],
-      ));
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
