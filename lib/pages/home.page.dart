@@ -34,20 +34,45 @@ class _HomePageState extends State<HomePage> {
   appBar: AppBar(
     title: Text("Finance App"),
     actions: [
-      IconButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  StatisticPage(),
-            ),
-          );
-        },
 
-        icon: Icon(Icons.bar_chart_rounded),
+  Padding(
+    padding: const EdgeInsets.only(right: 12),
+
+    child: ElevatedButton.icon(
+
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color.fromARGB(255, 147, 45, 79),
+        foregroundColor: Colors.white,
+        elevation: 3,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
-    ],
+
+      onPressed: () {
+
+        Navigator.push(
+          context,
+
+          MaterialPageRoute(
+            builder: (context) =>
+                StatisticPage(),
+          ),
+        );
+      },
+
+      icon: Icon(Icons.bar_chart),
+
+      label: Text(
+        "Chart",
+        style: GoogleFonts.montserrat(
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ),
+  ),
+],
+
   ),
 
   body: SingleChildScrollView(

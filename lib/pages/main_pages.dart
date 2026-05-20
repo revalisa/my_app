@@ -44,7 +44,7 @@ class _MainPagesState extends State<MainPages> {
     return Scaffold(
       appBar: currentIndex == 0 
       ? CalendarAppBar(
-        accent: const Color.fromARGB(255, 176, 119, 138),
+        accent: const Color.fromARGB(255, 147, 45, 79),
         backButton: false,
         locale: 'id',
         onDateChanged: (value) {
@@ -75,13 +75,14 @@ class _MainPagesState extends State<MainPages> {
               setState(() {});
             }); 
           },
-          backgroundColor: const Color.fromARGB(255, 220, 129, 160), 
+          backgroundColor: const Color.fromARGB(255, 222, 131, 161),
           child: Icon(Icons.add, color: Colors.white,),
         ),
       ),
       body: _children[currentIndex],
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
+        color: const Color.fromARGB(255, 208, 170, 182),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
