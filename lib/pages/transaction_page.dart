@@ -235,7 +235,7 @@ class _TransactionPageState extends State<TransactionPage> {
                   decoration: const InputDecoration(
                     border: UnderlineInputBorder(),
                     labelText: 'Amount',
-                    hintText: 'Contoh: 1000 + 2000',
+                    hintText: 'nominal harga',
                   ),
                 ),
               ),
