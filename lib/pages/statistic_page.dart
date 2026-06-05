@@ -73,7 +73,6 @@ class _StatisticPageState
         builder:
             (context, snapshot) {
 
-          // LOADING
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
 
@@ -83,7 +82,6 @@ class _StatisticPageState
             );
           }
 
-          // ERROR
           if (snapshot.hasError) {
 
             return Center(
@@ -93,7 +91,6 @@ class _StatisticPageState
             );
           }
 
-          // EMPTY
           if (!snapshot.hasData ||
               snapshot.data!.docs.isEmpty) {
 
@@ -118,11 +115,9 @@ class _StatisticPageState
           final docs =
               snapshot.data!.docs;
 
-          // ================= TOTAL =================
           int monthlyIncome = 0;
           int monthlyExpense = 0;
 
-          // ================= WEEK =================
           List<double> weeklyIncome = [
             0,
             0,
@@ -137,14 +132,9 @@ class _StatisticPageState
             0
           ];
 
-          // ================= PIE =================
-          Map<String, double>
-              categoryExpense = {};
-
           DateTime now =
               DateTime.now();
 
-          // ================= LOOP =================
           for (var item in docs) {
 
             final data =
@@ -152,7 +142,6 @@ class _StatisticPageState
                     as Map<String,
                         dynamic>;
 
-            // VALIDASI DATA
             if (data['date'] == null ||
                 data['amount'] == null ||
                 data['type'] == null) {
@@ -170,20 +159,13 @@ class _StatisticPageState
             int type =
                 data['type'];
 
-            String categoryName =
-                data['category_name'] ??
-                    'Lainnya';
-
-            // FILTER BULAN INI
             if (trxDate.month ==
                     now.month &&
                 trxDate.year ==
                     now.year) {
 
-              // MINGGU
               int weekIndex =
-                  ((trxDate.day - 1) /
-                          7)
+                  ((trxDate.day - 1) / 7)
                       .floor();
 
               if (weekIndex > 3) {
@@ -210,24 +192,14 @@ class _StatisticPageState
                 weeklyExpense[
                         weekIndex] +=
                     amount.toDouble();
-
-                // PIE CHART
-                categoryExpense[
-                        categoryName] =
-                    (categoryExpense[
-                                categoryName] ??
-                            0) +
-                        amount;
               }
             }
           }
 
-          // ================= BALANCE =================
           int balance =
               monthlyIncome -
                   monthlyExpense;
 
-          // ================= MAX CHART =================
           double maxValue = 0;
 
           for (var value
@@ -539,13 +511,13 @@ class _StatisticPageState
                   ),
 
                   const SizedBox(
-                    height: 30,
+                    height: 35,
                   ),
 
                   // ================= PIE CHART =================
                   Text(
 
-                    "Kategori Pengeluaran",
+                    "Perbandingan Keuangan",
 
                     style:
                         GoogleFonts
@@ -570,18 +542,152 @@ class _StatisticPageState
 
                       PieChartData(
 
-                        sections:
-                            showingSections(
-                          categoryExpense,
-                        ),
-
                         centerSpaceRadius:
-                            45,
+                            50,
 
                         sectionsSpace:
                             3,
+
+                        sections: [
+
+                          // PEMASUKAN
+                          PieChartSectionData(
+
+                            value:
+                                monthlyIncome
+                                    .toDouble(),
+
+                            color:
+                                Colors.green,
+
+                            title:
+                                monthlyIncome ==
+                                        0
+                                    ? '0%'
+                                    : '${((monthlyIncome / (monthlyIncome + monthlyExpense)) * 100).toStringAsFixed(1)}%',
+
+                            radius: 110,
+
+                            titleStyle:
+                                GoogleFonts
+                                    .montserrat(
+
+                              color:
+                                  Colors.white,
+
+                              fontWeight:
+                                  FontWeight
+                                      .bold,
+
+                              fontSize: 14,
+                            ),
+                          ),
+
+                          // PENGELUARAN
+                          PieChartSectionData(
+
+                            value:
+                                monthlyExpense
+                                    .toDouble(),
+
+                            color:
+                                Colors.red,
+
+                            title:
+                                monthlyExpense ==
+                                        0
+                                    ? '0%'
+                                    : '${((monthlyExpense / (monthlyIncome + monthlyExpense)) * 100).toStringAsFixed(1)}%',
+
+                            radius: 110,
+
+                            titleStyle:
+                                GoogleFonts
+                                    .montserrat(
+
+                              color:
+                                  Colors.white,
+
+                              fontWeight:
+                                  FontWeight
+                                      .bold,
+
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
+
+                  const SizedBox(
+                    height: 20,
+                  ),
+
+                  Row(
+
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .center,
+
+                    children: [
+
+                      Container(
+                        width: 14,
+                        height: 14,
+                        decoration:
+                            const BoxDecoration(
+                          color:
+                              Colors.green,
+                          shape:
+                              BoxShape.circle,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 8,
+                      ),
+
+                      Text(
+                        "Pemasukan",
+                        style:
+                            GoogleFonts
+                                .montserrat(
+                          fontWeight:
+                              FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 20,
+                      ),
+
+                      Container(
+                        width: 14,
+                        height: 14,
+                        decoration:
+                            const BoxDecoration(
+                          color:
+                              Colors.red,
+                          shape:
+                              BoxShape.circle,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 8,
+                      ),
+
+                      Text(
+                        "Pengeluaran",
+                        style:
+                            GoogleFonts
+                                .montserrat(
+                          fontWeight:
+                              FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(
@@ -657,6 +763,7 @@ class _StatisticPageState
                             ),
                           ),
 
+                          // ================= FORMAT ANGKA =================
                           leftTitles:
                               AxisTitles(
 
@@ -667,7 +774,7 @@ class _StatisticPageState
                                   true,
 
                               reservedSize:
-                                  50,
+                                  55,
 
                               getTitlesWidget:
                                   (
@@ -675,11 +782,44 @@ class _StatisticPageState
                                 meta,
                               ) {
 
+                                String text =
+                                    '';
+
+                                // MILIAR
+                                if (value >=
+                                    1000000000) {
+
+                                  text =
+                                      '${(value / 1000000000).toStringAsFixed(1)}M';
+                                }
+
+                                // JUTA
+                                else if (value >=
+                                    1000000) {
+
+                                  text =
+                                      '${(value / 1000000).toStringAsFixed(1)}JT';
+                                }
+
+                                // RIBU
+                                else if (value >=
+                                    1000) {
+
+                                  text =
+                                      '${(value / 1000).toStringAsFixed(0)}K';
+                                }
+
+                                // NORMAL
+                                else {
+
+                                  text = value
+                                      .toInt()
+                                      .toString();
+                                }
+
                                 return Text(
 
-                                  value
-                                      .toInt()
-                                      .toString(),
+                                  text,
 
                                   style:
                                       GoogleFonts
@@ -687,6 +827,10 @@ class _StatisticPageState
 
                                     fontSize:
                                         10,
+
+                                    fontWeight:
+                                        FontWeight
+                                            .bold,
                                   ),
                                 );
                               },
@@ -838,83 +982,4 @@ class _StatisticPageState
       ],
     );
   }
-
-  // ================= PIE =================
-    List<PieChartSectionData>
-        showingSections(
-      Map<String, double> data,
-    ) {
-
-      final colors = [
-        Colors.green,
-        Colors.red,
-      ];
-
-      // TOTAL
-      double total = 0;
-
-      for (var value in data.values) {
-        total += value;
-      }
-
-      final entries =
-          data.entries.toList();
-
-      return List.generate(
-        entries.length,
-        (i) {
-
-          final value =
-              entries[i].value;
-
-          // PERSENTASE
-          final percentage =
-              ((value / total) * 100);
-
-          return PieChartSectionData(
-
-            // VALUE ASLI
-            value: value,
-
-            // WARNA
-            color:
-                colors[
-                    i %
-                        colors.length],
-
-            // TEXT %
-            title:
-                '${percentage.toStringAsFixed(1)}%',
-
-            // BESAR TEXT
-            titleStyle:
-                GoogleFonts.montserrat(
-
-              color: Colors.white,
-
-              fontWeight:
-                  FontWeight.bold,
-
-              fontSize: 13,
-            ),
-
-            // BESAR PIE
-            radius: 110,
-
-            // POSISI TEXT %
-            titlePositionPercentageOffset:
-                0.6,
-
-            // BORDER
-            borderSide:
-                const BorderSide(
-
-              color: Colors.white,
-
-              width: 2,
-            ),
-          );
-    },
-  );
-}
 }

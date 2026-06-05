@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class TransactionPage extends StatefulWidget {
-
   // FIREBASE DOC ID
   final String? docId;
 
@@ -14,16 +13,12 @@ class TransactionPage extends StatefulWidget {
   });
 
   @override
-  State<TransactionPage> createState() =>
-      _TransactionPageState();
+  State<TransactionPage> createState() => _TransactionPageState();
 }
 
-class _TransactionPageState
-    extends State<TransactionPage> {
-
+class _TransactionPageState extends State<TransactionPage> {
   // ================= FIREBASE =================
-  final FirebaseFirestore firestore =
-      FirebaseFirestore.instance;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   // ================= SWITCH =================
   bool isExpense = true;
@@ -32,227 +27,152 @@ class _TransactionPageState
   int type = 2;
 
   // ================= CONTROLLER =================
-  final TextEditingController
-      amountController =
-      TextEditingController();
-
-  final TextEditingController
-      detailController =
-      TextEditingController();
-
-  final TextEditingController
-      dateController =
-      TextEditingController();
+  final TextEditingController amountController = TextEditingController();
+  final TextEditingController detailController = TextEditingController();
+  final TextEditingController dateController = TextEditingController();
 
   // ================= CATEGORY =================
   String? selectedCategoryId;
   String? selectedCategoryName;
 
-  // ================= INSERT =================
-  Future<void> insertTransaction() async {
+  // ================= AMOUNT CALCULATOR =================
+  int calculateAmount(String input) {
+    final cleanInput = input.replaceAll(' ', '');
 
-    try {
-
-      await firestore
-          .collection('transactions')
-          .add({
-
-        'amount':
-            int.parse(
-          amountController.text,
-        ),
-
-        'detail':
-            detailController.text,
-
-        'categoryId':
-            selectedCategoryId,
-
-        'category_name':
-            selectedCategoryName,
-
-        'type':
-            type,
-
-        'date':
-            Timestamp.fromDate(
-          DateTime.parse(
-            dateController.text,
-          ),
-        ),
-
-        'createdAt':
-            Timestamp.now(),
-
-        'updatedAt':
-            Timestamp.now(),
-      });
-
-      if (mounted) {
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-
-          const SnackBar(
-            content: Text(
-              'Transaction berhasil disimpan',
-            ),
-          ),
-        );
-      }
+    if (cleanInput.isEmpty) {
+      throw Exception('Amount wajib diisi');
     }
 
-    catch (e) {
+    if (!RegExp(r'^[0-9+]+$').hasMatch(cleanInput)) {
+      throw Exception('Amount hanya boleh angka dan tanda +');
+    }
 
-      debugPrint(
-        e.toString(),
-      );
+    final numbers = cleanInput.split('+');
+    int total = 0;
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+    for (final number in numbers) {
+      if (number.isEmpty) {
+        throw Exception('Format amount tidak valid');
+      }
 
-        SnackBar(
-          content: Text(
-            'Error: $e',
-          ),
-        ),
-      );
+      total += int.parse(number);
+    }
+
+    return total;
+  }
+
+  Future<Map<String, dynamic>> buildTransactionData({
+    bool isUpdate = false,
+  }) async {
+    if (selectedCategoryId == null || selectedCategoryName == null) {
+      throw Exception('Category wajib dipilih');
+    }
+
+    final amount = calculateAmount(amountController.text);
+    final date = DateTime.tryParse(dateController.text);
+
+    if (date == null) {
+      throw Exception('Tanggal tidak valid');
+    }
+
+    final data = <String, dynamic>{
+      'amount': amount,
+      'detail': detailController.text.trim(),
+      'categoryId': selectedCategoryId,
+      'category_name': selectedCategoryName,
+      'type': type,
+      'date': Timestamp.fromDate(date),
+      'updatedAt': Timestamp.now(),
+    };
+
+    if (!isUpdate) {
+      data['createdAt'] = Timestamp.now();
+    }
+
+    return data;
+  }
+
+  void showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+      ),
+    );
+  }
+
+  // ================= INSERT =================
+  Future<void> insertTransaction() async {
+    try {
+      final data = await buildTransactionData();
+
+      await firestore.collection('transactions').add(data);
+
+      showMessage('Transaction berhasil disimpan');
+    } catch (e) {
+      debugPrint(e.toString());
+      showMessage('Error: $e');
     }
   }
 
   // ================= UPDATE =================
   Future<void> updateTransaction() async {
+    if (widget.docId == null) return;
 
     try {
+      final data = await buildTransactionData(isUpdate: true);
 
-      await firestore
-          .collection('transactions')
-          .doc(widget.docId)
-          .update({
+      await firestore.collection('transactions').doc(widget.docId).update(data);
 
-        'amount':
-            int.parse(
-          amountController.text,
-        ),
-
-        'detail':
-            detailController.text,
-
-        'categoryId':
-            selectedCategoryId,
-
-        'category_name':
-            selectedCategoryName,
-
-        'type':
-            type,
-
-        'date':
-            Timestamp.fromDate(
-          DateTime.parse(
-            dateController.text,
-          ),
-        ),
-
-        'updatedAt':
-            Timestamp.now(),
-      });
-
-      if (mounted) {
-
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-
-          const SnackBar(
-            content: Text(
-              'Transaction berhasil diupdate',
-            ),
-          ),
-        );
-      }
-    }
-
-    catch (e) {
-
-      debugPrint(
-        e.toString(),
-      );
+      showMessage('Transaction berhasil diupdate');
+    } catch (e) {
+      debugPrint(e.toString());
+      showMessage('Error: $e');
     }
   }
 
   // ================= GET TRANSACTION =================
   Future<void> getTransactionDetail() async {
-
     if (widget.docId == null) return;
 
     try {
-
-      final doc =
-          await firestore
-              .collection('transactions')
-              .doc(widget.docId)
-              .get();
+      final doc = await firestore.collection('transactions').doc(widget.docId).get();
 
       if (!doc.exists) return;
 
-      final data =
-          doc.data();
+      final data = doc.data();
 
       if (data == null) return;
 
-      amountController.text =
-          data['amount']
-              .toString();
+      amountController.text = data['amount'].toString();
+      detailController.text = data['detail'] ?? '';
+      selectedCategoryId = data['categoryId'];
+      selectedCategoryName = data['category_name'];
+      type = data['type'] ?? 2;
+      isExpense = type == 2;
 
-      detailController.text =
-          data['detail'] ?? '';
+      final timestamp = data['date'];
 
-      selectedCategoryId =
-          data['categoryId'];
+      if (timestamp is Timestamp) {
+        dateController.text = DateFormat('yyyy-MM-dd').format(timestamp.toDate());
+      }
 
-      selectedCategoryName =
-          data['category_name'];
-
-      type =
-          data['type'] ?? 2;
-
-      isExpense =
-          type == 2;
-
-      Timestamp timestamp =
-          data['date'];
-
-      DateTime date =
-          timestamp.toDate();
-
-      dateController.text =
-          DateFormat(
-            'yyyy-MM-dd',
-          ).format(date);
-
-      setState(() {});
-    }
-
-    catch (e) {
-
-      debugPrint(
-        e.toString(),
-      );
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+      showMessage('Error: $e');
     }
   }
 
   // ================= INIT =================
   @override
   void initState() {
-
     super.initState();
 
-    dateController.text =
-        DateFormat(
-          'yyyy-MM-dd',
-        ).format(
-          DateTime.now(),
-        );
+    dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     getTransactionDetail();
   }
@@ -260,266 +180,149 @@ class _TransactionPageState
   // ================= DISPOSE =================
   @override
   void dispose() {
-
     amountController.dispose();
-
     detailController.dispose();
-
     dateController.dispose();
-
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
-
         title: Text(
-
-          widget.docId == null
-              ? 'Add Transaction'
-              : 'Edit Transaction',
+          widget.docId == null ? 'Add Transaction' : 'Edit Transaction',
         ),
       ),
-
-      body: SingleChildScrollView(
-
-        child: SafeArea(
-
+      body: SafeArea(
+        child: SingleChildScrollView(
           child: Column(
-
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
-
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               // ================= SWITCH =================
               Row(
-
                 children: [
-
                   Switch(
-
                     value: isExpense,
-
                     onChanged: (value) {
-
                       setState(() {
-
-                        isExpense =
-                            value;
-
-                        type =
-                            isExpense
-                                ? 2
-                                : 1;
-
-                        selectedCategoryId =
-                            null;
-
-                        selectedCategoryName =
-                            null;
+                        isExpense = value;
+                        type = isExpense ? 2 : 1;
+                        selectedCategoryId = null;
+                        selectedCategoryName = null;
                       });
                     },
-
-                    activeThumbColor:
-                        Colors.red,
-
-                    inactiveThumbColor:
-                        Colors.green,
+                    activeThumbColor: Colors.red,
+                    inactiveThumbColor: Colors.green,
                   ),
-
                   Text(
-
-                    isExpense
-                        ? 'Expense'
-                        : 'Income',
-
-                    style:
-                        GoogleFonts.montserrat(
-
+                    isExpense ? 'Expense' : 'Income',
+                    style: GoogleFonts.montserrat(
                       fontSize: 14,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
 
               // ================= AMOUNT =================
               Padding(
-
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 16,
-                ),
-
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextFormField(
-
-                  keyboardType:
-                      TextInputType.number,
-
-                  controller:
-                      amountController,
-
-                  decoration:
-                      const InputDecoration(
-
-                    border:
-                        UnderlineInputBorder(),
-
-                    labelText:
-                        "Amount",
+                  keyboardType: TextInputType.text,
+                  controller: amountController,
+                  decoration: const InputDecoration(
+                    border: UnderlineInputBorder(),
+                    labelText: 'Amount',
+                    hintText: 'Contoh: 1000 + 2000',
                   ),
                 ),
               ),
 
-              const SizedBox(
-                height: 25,
-              ),
+              const SizedBox(height: 25),
 
               // ================= CATEGORY =================
               Padding(
-
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 16,
-                ),
-
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-
                   'Category',
-
-                  style:
-                      GoogleFonts.montserrat(
-
+                  style: GoogleFonts.montserrat(
                     fontSize: 16,
                   ),
                 ),
               ),
 
               StreamBuilder<QuerySnapshot>(
-
                 stream: firestore
-                    .collection(
-                      'categories',
-                    )
+                    .collection('categories')
                     .where(
                       'type',
                       isEqualTo: type,
                     )
                     .snapshots(),
-
-                builder:
-                    (context, snapshot) {
-
-                  // LOADING
-                  if (snapshot.connectionState ==
-                      ConnectionState.waiting) {
-
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                      child:
-                          CircularProgressIndicator(),
+                      child: CircularProgressIndicator(),
                     );
                   }
 
-                  // ERROR
                   if (snapshot.hasError) {
-
                     return Center(
-
-                      child: Text(
-                        snapshot.error
-                            .toString(),
-                      ),
+                      child: Text(snapshot.error.toString()),
                     );
                   }
 
-                  // DATA
-                  final docs =
-                      snapshot.data?.docs ??
-                          [];
+                  final docs = snapshot.data?.docs ?? [];
 
-                  // EMPTY
                   if (docs.isEmpty) {
+                    selectedCategoryId = null;
+                    selectedCategoryName = null;
 
                     return const Padding(
-
-                      padding:
-                          EdgeInsets.all(16),
-
-                      child: Text(
-                        'Category kosong',
-                      ),
+                      padding: EdgeInsets.all(16),
+                      child: Text('Category kosong'),
                     );
                   }
 
-                  // DEFAULT CATEGORY
-                  selectedCategoryId ??=
-                      docs.first.id;
+                  final categoryStillExists = docs.any(
+                    (item) => item.id == selectedCategoryId,
+                  );
 
-                  selectedCategoryName ??=
-                      (docs.first.data()
-                              as Map<String,
-                                  dynamic>)['name'];
+                  if (selectedCategoryId == null || !categoryStillExists) {
+                    final firstCategory = docs.first;
+                    final firstData = firstCategory.data() as Map<String, dynamic>;
+
+                    selectedCategoryId = firstCategory.id;
+                    selectedCategoryName = firstData['name'];
+                  }
 
                   return Padding(
-
-                    padding:
-                        const EdgeInsets.symmetric(
-                      horizontal: 16,
-                    ),
-
-                    child:
-                        DropdownButton<String>(
-
-                      value:
-                          selectedCategoryId,
-
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: DropdownButton<String>(
+                      value: selectedCategoryId,
                       isExpanded: true,
-
-                      items:
-                          docs.map((item) {
-
-                        final data =
-                            item.data()
-                                as Map<String,
-                                    dynamic>;
+                      items: docs.map((item) {
+                        final data = item.data() as Map<String, dynamic>;
 
                         return DropdownMenuItem<String>(
-
-                          value:
-                              item.id,
-
-                          child: Text(
-                            data['name'],
-                          ),
+                          value: item.id,
+                          child: Text(data['name'] ?? ''),
                         );
                       }).toList(),
-
                       onChanged: (value) {
+                        if (value == null) return;
 
                         setState(() {
+                          selectedCategoryId = value;
 
-                          selectedCategoryId =
-                              value;
-
-                          final selected =
-                              docs.firstWhere(
-                            (e) =>
-                                e.id ==
-                                value,
+                          final selected = docs.firstWhere(
+                            (item) => item.id == value,
                           );
 
                           selectedCategoryName =
-                              (selected.data()
-                                      as Map<String,
-                                          dynamic>)['name'];
+                              (selected.data() as Map<String, dynamic>)['name'];
                         });
                       },
                     ),
@@ -527,169 +330,86 @@ class _TransactionPageState
                 },
               ),
 
-              const SizedBox(
-                height: 25,
-              ),
+              const SizedBox(height: 25),
 
               // ================= DATE =================
               Padding(
-
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 16,
-                ),
-
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextField(
-
                   readOnly: true,
-
-                  controller:
-                      dateController,
-
-                  decoration:
-                      const InputDecoration(
-                    labelText:
-                        "Enter Date",
+                  controller: dateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Enter Date',
                   ),
-
                   onTap: () async {
+                    final today = DateTime.now();
+                    final currentDate =
+                        DateTime.tryParse(dateController.text) ?? today;
 
-                    DateTime? pickedDate =
-                        await showDatePicker(
-
-                      context:
-                          context,
-
-                      initialDate:
-                          DateTime.now(),
-
-                      firstDate:
-                          DateTime.now()
-                              .subtract(
-                        const Duration(
-                          days: 365,
-                        ),
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: currentDate,
+                      firstDate: today.subtract(
+                        const Duration(days: 365),
                       ),
-
-                      lastDate:
-                          DateTime.now(),
+                      lastDate: today,
                     );
 
                     if (pickedDate != null) {
-
-                      dateController.text =
-                          DateFormat(
-                            'yyyy-MM-dd',
-                          ).format(
-                            pickedDate,
-                          );
+                      dateController.text = DateFormat('yyyy-MM-dd').format(
+                        pickedDate,
+                      );
                     }
                   },
                 ),
               ),
 
-              const SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
 
               // ================= DETAIL =================
               Padding(
-
-                padding:
-                    const EdgeInsets.symmetric(
-                  horizontal: 16,
-                ),
-
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextFormField(
-
-                  controller:
-                      detailController,
-
-                  decoration:
-                      const InputDecoration(
-
-                    border:
-                        UnderlineInputBorder(),
-
-                    labelText:
-                        "Details",
+                  controller: detailController,
+                  decoration: const InputDecoration(
+                    border: UnderlineInputBorder(),
+                    labelText: 'Details',
                   ),
                 ),
               ),
 
-              const SizedBox(
-                height: 25,
-              ),
+              const SizedBox(height: 25),
 
               // ================= SAVE BUTTON =================
               Center(
-
                 child: ElevatedButton(
-
                   onPressed: () async {
-
-                    // VALIDASI
-                    if (amountController
-                        .text
-                        .isEmpty) {
-
-                      ScaffoldMessenger.of(
-                              context)
-                          .showSnackBar(
-
-                        const SnackBar(
-                          content: Text(
-                            'Amount wajib diisi',
-                          ),
-                        ),
-                      );
-
+                    if (amountController.text.trim().isEmpty) {
+                      showMessage('Amount wajib diisi');
                       return;
                     }
 
-                    if (dateController
-                        .text
-                        .isEmpty) {
-
-                      ScaffoldMessenger.of(
-                              context)
-                          .showSnackBar(
-
-                        const SnackBar(
-                          content: Text(
-                            'Tanggal wajib diisi',
-                          ),
-                        ),
-                      );
-
+                    if (dateController.text.trim().isEmpty) {
+                      showMessage('Tanggal wajib diisi');
                       return;
                     }
 
-                    // INSERT
-                    if (widget.docId ==
-                        null) {
+                    if (selectedCategoryId == null) {
+                      showMessage('Category wajib dipilih');
+                      return;
+                    }
 
+                    if (widget.docId == null) {
                       await insertTransaction();
-                    }
-
-                    // UPDATE
-                    else {
-
+                    } else {
                       await updateTransaction();
                     }
 
                     if (mounted) {
-
-                      Navigator.pop(
-                        context,
-                        true,
-                      );
+                      Navigator.pop(context, true);
                     }
                   },
-
-                  child: const Text(
-                    "Save",
-                  ),
+                  child: const Text('Save'),
                 ),
               ),
             ],
