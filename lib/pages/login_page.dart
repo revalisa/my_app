@@ -17,6 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
 
   bool isLoading = false;
+  bool isResetLoading = false;
   bool isPasswordHidden = true;
   bool hasSubmitted = false;
 
@@ -43,6 +44,10 @@ class _LoginPageState extends State<LoginPage> {
         return 'Password salah';
       case 'invalid-credential':
         return 'Email atau password salah';
+      case 'too-many-requests':
+        return 'Terlalu banyak percobaan. Coba lagi beberapa saat';
+      case 'network-request-failed':
+        return 'Koneksi internet bermasalah';
       default:
         return e.message ?? 'Login gagal';
     }
@@ -82,6 +87,44 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         setState(() {
           isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> resetPassword() async {
+    final email = emailController.text.trim();
+
+    if (email.isEmpty) {
+      showMessage('Masukkan email terlebih dahulu');
+      return;
+    }
+
+    if (!email.contains('@')) {
+      showMessage('Format email tidak valid');
+      return;
+    }
+
+    setState(() {
+      isResetLoading = true;
+    });
+
+    try {
+      showMessage('Mengirim link reset password...');
+
+      await auth.sendPasswordResetEmail(
+        email: email,
+      );
+
+      showMessage('Jika email terdaftar, link reset password akan dikirim');
+    } on FirebaseAuthException catch (e) {
+      showMessage(getFirebaseAuthMessage(e));
+    } catch (e) {
+      showMessage('Error: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          isResetLoading = false;
         });
       }
     }
@@ -195,9 +238,24 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: isLoading || isResetLoading
+                          ? null
+                          : () {
+                              resetPassword();
+                            },
+                      child: Text(
+                        isResetLoading
+                            ? 'Mengirim link...'
+                            : 'Lupa kata sandi?',
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: isLoading
+                    onPressed: isLoading || isResetLoading
                         ? null
                         : () {
                             login();
@@ -218,7 +276,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: isLoading
+                    onPressed: isLoading || isResetLoading
                         ? null
                         : () {
                             showMessage('Membuka halaman daftar');
