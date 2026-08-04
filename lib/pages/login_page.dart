@@ -72,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       showMessage('Sedang login...');
 
-     final credential = await auth.createUserWithEmailAndPassword(
+     final credential = await auth.signInWithEmailAndPassword(
       email: emailController.text.trim(),
       password: passwordController.text.trim(),
     );
@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
       'email': credential.user!.email,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    
+
       if (!mounted) return;
 
       showMessage('Login berhasil');
