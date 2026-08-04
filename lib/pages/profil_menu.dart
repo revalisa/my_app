@@ -67,6 +67,7 @@ class ProfileMenu extends StatelessWidget {
             ],
           ),
         ),
+        // popup menu divider artinya garis pemisah antara menu yang satu dengan yang lainnya
         const PopupMenuDivider(),
         const PopupMenuItem<String>(
           value: 'logout',

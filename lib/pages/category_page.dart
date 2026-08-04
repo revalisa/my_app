@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +12,7 @@ class CategoryPage extends StatefulWidget {
 
 class _CategoryPageState extends State<CategoryPage> {
   // ================= FIREBASE =================
+  // mengakses database firestore
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   // ================= SWITCH =================
@@ -37,14 +39,22 @@ class _CategoryPageState extends State<CategoryPage> {
   }
 
   // ================= INSERT =================
+  // insertCategory  menambahkan category baru 
   Future<void> insertCategory(String name, int type) async {
     try {
-      await firestore.collection('categories').add({
-        'name': name,
-        'type': type,
-        'createdAt': Timestamp.now(),
-        'updatedAt': Timestamp.now(),
-      });
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('categories')
+        .add({
+          'name': name,
+          'type': type,
+          'createdAt': Timestamp.now(),
+          'updatedAt': Timestamp.now(),
+        });
 
       showMessage('Category berhasil ditambahkan');
     } catch (e) {
@@ -56,10 +66,18 @@ class _CategoryPageState extends State<CategoryPage> {
   // ================= UPDATE =================
   Future<void> updateCategory(String id, String newName) async {
     try {
-      await firestore.collection('categories').doc(id).update({
-        'name': newName,
-        'updatedAt': Timestamp.now(),
-      });
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('categories')
+        .doc(id)
+        .update({
+          'name': newName,
+          'updatedAt': Timestamp.now(),
+        });
 
       showMessage('Category berhasil diupdate');
     } catch (e) {
@@ -71,7 +89,15 @@ class _CategoryPageState extends State<CategoryPage> {
   // ================= DELETE =================
   Future<void> deleteCategory(String id) async {
     try {
-      await firestore.collection('categories').doc(id).delete();
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('categories')
+        .doc(id)
+        .delete();
 
       showMessage('Category berhasil dihapus');
     } catch (e) {
@@ -80,6 +106,7 @@ class _CategoryPageState extends State<CategoryPage> {
     }
   }
 
+  // confirmDelete menampilkan dialog konfirmasi sebelum menghapus category.
   Future<void> confirmDelete(String id) async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -115,11 +142,14 @@ class _CategoryPageState extends State<CategoryPage> {
   }
 
   // ================= DIALOG =================
+  // openCategoryDialog menambahkan atau mengedit category.
   void openCategoryDialog(DocumentSnapshot? category) {
     if (category != null) {
+      // Mengisi controller dengan data category yang akan diedit
       final data = category.data() as Map<String, dynamic>;
       categoryNameController.text = data['name'] ?? '';
     } else {
+      // Mengosongkan controller jika menambahkan category baru
       categoryNameController.clear();
     }
 
@@ -409,6 +439,8 @@ class _CategoryPageState extends State<CategoryPage> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: firestore
+                    .collection('users')
+                    .doc(FirebaseAuth.instance.currentUser?.uid)
                     .collection('categories')
                     .where(
                       'type',

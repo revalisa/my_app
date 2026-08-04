@@ -17,9 +17,11 @@ class MainPages extends StatefulWidget {
 
 class _MainPagesState extends State<MainPages> {
   // ================= DATE =================
+  // selectedDate adalah variabel yang menyimpan tanggal yang dipilih oleh pengguna.
   late DateTime selectedDate;
 
   // ================= INDEX =================
+  // currentIndex adalah variabel yang menyimpan indeks halaman yang sedang aktif.
   int currentIndex = 0;
 
   // ================= CHILDREN =================
@@ -36,6 +38,9 @@ class _MainPagesState extends State<MainPages> {
   }
 
   // ================= UPDATE VIEW =================
+  // void artinya setiap kali updateView dipanggil, 
+  //maka children akan diisi dengan widget HomePage dan CategoryPage yang sesuai dengan selectedDate yang dipilih. 
+  //Dengan demikian, tampilan aplikasi akan selalu diperbarui sesuai dengan tanggal yang dipilih oleh pengguna.
   void updateView() {
     children = [
       // HOME
@@ -62,6 +67,7 @@ class _MainPagesState extends State<MainPages> {
             ),
             backButton: false,
             locale: 'id',
+            // onDateChanged adalah callback yang akan dipanggil setiap kali pengguna memilih tanggal baru pada CalendarAppBar.
             onDateChanged: (value) {
               setState(() {
                 selectedDate = value;
@@ -137,6 +143,7 @@ class _MainPagesState extends State<MainPages> {
   Widget build(BuildContext context) {
     return Scaffold(
       // ================= APPBAR =================
+      // jika 0 maka kalender, jika 1 maka category
       appBar: currentIndex == 0 ? buildHomeAppBar() : buildCategoryAppBar(),
 
       // ================= FLOATING BUTTON =================
@@ -156,7 +163,7 @@ class _MainPagesState extends State<MainPages> {
                 Navigator.of(context)
                     .push(
                   MaterialPageRoute(
-                    builder: (context) => const TransactionPage(),
+                    builder: (context) => TransactionPage(),
                   ),
                 )
                     .then((value) {
@@ -168,6 +175,7 @@ class _MainPagesState extends State<MainPages> {
             )
           : null,
 
+      
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
       // ================= BODY =================

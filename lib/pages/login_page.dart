@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -71,11 +72,19 @@ class _LoginPageState extends State<LoginPage> {
     try {
       showMessage('Sedang login...');
 
-      await auth.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+     final credential = await auth.createUserWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
 
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(credential.user!.uid)
+        .set({
+      'email': credential.user!.email,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    
       if (!mounted) return;
 
       showMessage('Login berhasil');

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,9 @@ import 'package:my_app/pages/transaction_page.dart';
 
 class HomePage extends StatefulWidget {
   final DateTime selectedDate;
+
+  final user = FirebaseAuth.instance.currentUser;
+  final String userUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
   HomePage({
     super.key,
@@ -34,7 +38,12 @@ class _HomePageState extends State<HomePage> {
   // ================= DELETE =================
   Future<void> deleteTransaction(String id) async {
     try {
-      await firestore.collection('transactions').doc(id).delete();
+         await firestore
+        .collection('users')
+        .doc(widget.userUid)
+        .collection('transactions')
+        .doc(id)
+        .delete();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -200,6 +209,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget buildSummaryCard({
+    // required artinya total pemasukan dan pengeluaran untuk tanggal yang dipilih
     required int totalIncome,
     required int totalExpense,
   }) {
@@ -216,6 +226,7 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Row(
         children: [
+          // buildSummaryItem artinya membuat ringkasan
           buildSummaryItem(
             title: 'Pemasukan',
             amount: totalIncome,
@@ -233,7 +244,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
+  // buildEmptyState artinya membuat tampilan ketika tidak ada transaksi pada tanggal yang dipilih
   Widget buildEmptyState() {
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -278,7 +289,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
+  // buildTransactionCard artinya membuat tampilan untuk setiap transaksi yang ada pada tanggal yang dipilih
   Widget buildTransactionCard({
     required QueryDocumentSnapshot item,
     required Map<String, dynamic> data,
@@ -398,6 +409,8 @@ class _HomePageState extends State<HomePage> {
         top: false,
         child: StreamBuilder<QuerySnapshot>(
           stream: firestore
+              .collection('users')
+              .doc(widget.userUid)
               .collection('transactions')
               .where(
                 'date',

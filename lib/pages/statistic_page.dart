@@ -1,985 +1,461 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-class StatisticPage extends StatefulWidget {
+class StatisticPage extends StatelessWidget {
   const StatisticPage({super.key});
 
-  @override
-  State<StatisticPage> createState() =>
-      _StatisticPageState();
-}
-
-class _StatisticPageState
-    extends State<StatisticPage> {
-
-  final FirebaseFirestore firestore =
-      FirebaseFirestore.instance;
-
-  final formatCurrency =
-      NumberFormat.currency(
-    locale: 'id_ID',
-    symbol: 'Rp. ',
-    decimalDigits: 0,
-  );
+  final Color primary = const Color.fromARGB(255, 147, 45, 79);
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('User belum login'),
+        ),
+      );
+    }
 
     return Scaffold(
-
-      backgroundColor:
-          const Color(0xffF5F6FA),
-
       appBar: AppBar(
-
-        elevation: 0,
-
+        title: const Text('Statistics'),
         centerTitle: true,
-
-        backgroundColor:
-            const Color.fromARGB(
-          255,
-          147,
-          45,
-          79,
-        ),
-
-        title: Text(
-
-          "Statistics",
-
-          style:
-              GoogleFonts.montserrat(
-
-            color: Colors.white,
-
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
       ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('transactions')
+        .orderBy('date', descending: true)
+        .snapshots(),
+        builder: (context, snapshot) {
 
-      body:
-          StreamBuilder<QuerySnapshot>(
-
-        stream: firestore
-            .collection('transactions')
-            .orderBy('date')
-            .snapshots(),
-
-        builder:
-            (context, snapshot) {
-
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
-              child:
-                  CircularProgressIndicator(),
+              child: CircularProgressIndicator(),
             );
           }
 
           if (snapshot.hasError) {
-
             return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-              ),
+              child: Text(snapshot.error.toString()),
             );
           }
 
-          if (!snapshot.hasData ||
-              snapshot.data!.docs.isEmpty) {
+          final docs = snapshot.data?.docs ?? [];
 
-            return Center(
-
-              child: Text(
-
-                "Belum ada transaksi",
-
-                style:
-                    GoogleFonts.montserrat(
-
-                  fontSize: 18,
-
-                  fontWeight:
-                      FontWeight.bold,
-                ),
-              ),
+          if (docs.isEmpty) {
+            return const Center(
+              child: Text('Belum ada transaksi'),
             );
           }
 
-          final docs =
-              snapshot.data!.docs;
 
-          int monthlyIncome = 0;
-          int monthlyExpense = 0;
+          int income = 0;
+          int expense = 0;
 
-          List<double> weeklyIncome = [
-            0,
-            0,
-            0,
-            0
-          ];
+          List<double> weeklyIncome = [0,0,0,0];
+          List<double> weeklyExpense = [0,0,0,0];
 
-          List<double> weeklyExpense = [
-            0,
-            0,
-            0,
-            0
-          ];
+          final now = DateTime.now();
 
-          DateTime now =
-              DateTime.now();
 
-          for (var item in docs) {
+          for (var doc in docs) {
 
             final data =
-                item.data()
-                    as Map<String,
-                        dynamic>;
+                doc.data() as Map<String,dynamic>;
 
-            if (data['date'] == null ||
-                data['amount'] == null ||
-                data['type'] == null) {
-              continue;
-            }
+            final date =
+                (data['date'] as Timestamp).toDate();
 
-            DateTime trxDate =
-                (data['date']
-                        as Timestamp)
-                    .toDate();
+            final amount =
+                data['amount'] ?? 0;
 
-            int amount =
-                data['amount'];
+            final type =
+                data['type'] ?? 2;
 
-            int type =
-                data['type'];
 
-            if (trxDate.month ==
-                    now.month &&
-                trxDate.year ==
-                    now.year) {
+            if(date.month == now.month &&
+               date.year == now.year){
 
-              int weekIndex =
-                  ((trxDate.day - 1) / 7)
-                      .floor();
+              int week =
+                  ((date.day-1) ~/ 7);
 
-              if (weekIndex > 3) {
-                weekIndex = 3;
+              if(week > 3){
+                week = 3;
               }
 
-              // PEMASUKAN
-              if (type == 1) {
 
-                monthlyIncome +=
-                    amount;
-
-                weeklyIncome[
-                        weekIndex] +=
-                    amount.toDouble();
+              if(type == 1){
+                income += amount as int;
+                weeklyIncome[week] +=
+                    (amount).toDouble();
               }
 
-              // PENGELUARAN
-              if (type == 2) {
 
-                monthlyExpense +=
-                    amount;
-
-                weeklyExpense[
-                        weekIndex] +=
-                    amount.toDouble();
+              if(type == 2){
+                expense += amount as int;
+                weeklyExpense[week] +=
+                    (amount).toDouble();
               }
+
             }
           }
 
-          int balance =
-              monthlyIncome -
-                  monthlyExpense;
 
-          double maxValue = 0;
+          final balance = income-expense;
 
-          for (var value
-              in weeklyIncome) {
-
-            if (value > maxValue) {
-              maxValue = value;
+          double maxChartValue = 0;
+          for (var value in weeklyIncome) {
+            if (value > maxChartValue) {
+              maxChartValue = value;
             }
           }
 
-          for (var value
-              in weeklyExpense) {
-
-            if (value > maxValue) {
-              maxValue = value;
+          for (var value in weeklyExpense) {
+            if (value > maxChartValue) {
+              maxChartValue = value;
             }
           }
 
-          return SingleChildScrollView(
 
-            child: Padding(
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
 
-              padding:
-                  const EdgeInsets.all(
-                16,
+              _balanceCard(
+                income,
+                expense,
+                balance,
               ),
 
-              child: Column(
 
-                crossAxisAlignment:
-                    CrossAxisAlignment
-                        .start,
+              const SizedBox(height:30),
 
-                children: [
 
-                  // ================= CARD =================
-                  Container(
+              Text(
+                'Perbandingan Keuangan',
+                style: GoogleFonts.montserrat(
+                  fontSize:20,
+                  fontWeight:FontWeight.bold,
+                ),
+              ),
 
-                    width:
-                        double.infinity,
 
-                    padding:
-                        const EdgeInsets
-                            .all(22),
-
-                    decoration:
-                        BoxDecoration(
-
-                      borderRadius:
-                          BorderRadius.circular(
-                        28,
+              SizedBox(
+                height:250,
+                child: PieChart(
+                  PieChartData(
+                    sections:[
+                      PieChartSectionData(
+                        value: income.toDouble(),
+                        color: Colors.green,
+                        title:'Income',
                       ),
 
-                      gradient:
-                          const LinearGradient(
-
-                        colors: [
-
-                          Color.fromARGB(
-                            255,
-                            147,
-                            45,
-                            79,
-                          ),
-
-                          Color.fromARGB(
-                            255,
-                            182,
-                            87,
-                            119,
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    child: Column(
-
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
-
-                      children: [
-
-                        Text(
-
-                          "Keuangan Bulan Ini",
-
-                          style:
-                              GoogleFonts
-                                  .montserrat(
-
-                            color:
-                                Colors.white,
-
-                            fontSize: 22,
-
-                            fontWeight:
-                                FontWeight
-                                    .bold,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 10,
-                        ),
-
-                        Text(
-
-                          "Saldo : ${formatCurrency.format(balance)}",
-
-                          style:
-                              GoogleFonts
-                                  .montserrat(
-
-                            color: Colors
-                                .white70,
-
-                            fontSize: 15,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 25,
-                        ),
-
-                        Row(
-
-                          children: [
-
-                            // PEMASUKAN
-                            Expanded(
-
-                              child:
-                                  Container(
-
-                                padding:
-                                    const EdgeInsets
-                                        .all(
-                                  16,
-                                ),
-
-                                decoration:
-                                    BoxDecoration(
-
-                                  color: Colors
-                                      .white24,
-
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                    20,
-                                  ),
-                                ),
-
-                                child: Column(
-
-                                  children: [
-
-                                    const Icon(
-                                      Icons
-                                          .arrow_downward,
-                                      color: Colors
-                                          .green,
-                                    ),
-
-                                    const SizedBox(
-                                      height:
-                                          10,
-                                    ),
-
-                                    Text(
-
-                                      "Pemasukan",
-
-                                      style:
-                                          GoogleFonts
-                                              .montserrat(
-
-                                        color: Colors
-                                            .white,
-                                      ),
-                                    ),
-
-                                    const SizedBox(
-                                      height:
-                                          8,
-                                    ),
-
-                                    Text(
-
-                                      formatCurrency
-                                          .format(
-                                        monthlyIncome,
-                                      ),
-
-                                      textAlign:
-                                          TextAlign
-                                              .center,
-
-                                      style:
-                                          GoogleFonts
-                                              .montserrat(
-
-                                        color: Colors
-                                            .greenAccent,
-
-                                        fontWeight:
-                                            FontWeight
-                                                .bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(
-                              width: 15,
-                            ),
-
-                            // PENGELUARAN
-                            Expanded(
-
-                              child:
-                                  Container(
-
-                                padding:
-                                    const EdgeInsets
-                                        .all(
-                                  16,
-                                ),
-
-                                decoration:
-                                    BoxDecoration(
-
-                                  color: Colors
-                                      .white24,
-
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                    20,
-                                  ),
-                                ),
-
-                                child: Column(
-
-                                  children: [
-
-                                    const Icon(
-                                      Icons
-                                          .arrow_upward,
-                                      color: Colors
-                                          .red,
-                                    ),
-
-                                    const SizedBox(
-                                      height:
-                                          10,
-                                    ),
-
-                                    Text(
-
-                                      "Pengeluaran",
-
-                                      style:
-                                          GoogleFonts
-                                              .montserrat(
-
-                                        color: Colors
-                                            .white,
-                                      ),
-                                    ),
-
-                                    const SizedBox(
-                                      height:
-                                          8,
-                                    ),
-
-                                    Text(
-
-                                      formatCurrency
-                                          .format(
-                                        monthlyExpense,
-                                      ),
-
-                                      textAlign:
-                                          TextAlign
-                                              .center,
-
-                                      style:
-                                          GoogleFonts
-                                              .montserrat(
-
-                                        color: Colors
-                                            .redAccent,
-
-                                        fontWeight:
-                                            FontWeight
-                                                .bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 35,
-                  ),
-
-                  // ================= PIE CHART =================
-                  Text(
-
-                    "Perbandingan Keuangan",
-
-                    style:
-                        GoogleFonts
-                            .montserrat(
-
-                      fontSize: 20,
-
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 20,
-                  ),
-
-                  SizedBox(
-
-                    height: 300,
-
-                    child: PieChart(
-
-                      PieChartData(
-
-                        centerSpaceRadius:
-                            50,
-
-                        sectionsSpace:
-                            3,
-
-                        sections: [
-
-                          // PEMASUKAN
-                          PieChartSectionData(
-
-                            value:
-                                monthlyIncome
-                                    .toDouble(),
-
-                            color:
-                                Colors.green,
-
-                            title:
-                                monthlyIncome ==
-                                        0
-                                    ? '0%'
-                                    : '${((monthlyIncome / (monthlyIncome + monthlyExpense)) * 100).toStringAsFixed(1)}%',
-
-                            radius: 110,
-
-                            titleStyle:
-                                GoogleFonts
-                                    .montserrat(
-
-                              color:
-                                  Colors.white,
-
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-
-                              fontSize: 14,
-                            ),
-                          ),
-
-                          // PENGELUARAN
-                          PieChartSectionData(
-
-                            value:
-                                monthlyExpense
-                                    .toDouble(),
-
-                            color:
-                                Colors.red,
-
-                            title:
-                                monthlyExpense ==
-                                        0
-                                    ? '0%'
-                                    : '${((monthlyExpense / (monthlyIncome + monthlyExpense)) * 100).toStringAsFixed(1)}%',
-
-                            radius: 110,
-
-                            titleStyle:
-                                GoogleFonts
-                                    .montserrat(
-
-                              color:
-                                  Colors.white,
-
-                              fontWeight:
-                                  FontWeight
-                                      .bold,
-
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 20,
-                  ),
-
-                  Row(
-
-                    mainAxisAlignment:
-                        MainAxisAlignment
-                            .center,
-
-                    children: [
-
-                      Container(
-                        width: 14,
-                        height: 14,
-                        decoration:
-                            const BoxDecoration(
-                          color:
-                              Colors.green,
-                          shape:
-                              BoxShape.circle,
-                        ),
-                      ),
-
-                      const SizedBox(
-                        width: 8,
-                      ),
-
-                      Text(
-                        "Pemasukan",
-                        style:
-                            GoogleFonts
-                                .montserrat(
-                          fontWeight:
-                              FontWeight.bold,
-                        ),
-                      ),
-
-                      const SizedBox(
-                        width: 20,
-                      ),
-
-                      Container(
-                        width: 14,
-                        height: 14,
-                        decoration:
-                            const BoxDecoration(
-                          color:
-                              Colors.red,
-                          shape:
-                              BoxShape.circle,
-                        ),
-                      ),
-
-                      const SizedBox(
-                        width: 8,
-                      ),
-
-                      Text(
-                        "Pengeluaran",
-                        style:
-                            GoogleFonts
-                                .montserrat(
-                          fontWeight:
-                              FontWeight.bold,
-                        ),
+                      PieChartSectionData(
+                        value: expense.toDouble(),
+                        color: Colors.red,
+                        title:'Expense',
                       ),
                     ],
                   ),
-
-                  const SizedBox(
-                    height: 35,
-                  ),
-
-                  // ================= BAR CHART =================
-                  Text(
-
-                    "Grafik Mingguan",
-
-                    style:
-                        GoogleFonts
-                            .montserrat(
-
-                      fontSize: 20,
-
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(
-                    height: 20,
-                  ),
-
-                  SizedBox(
-
-                    height: 320,
-
-                    child: BarChart(
-
-                      BarChartData(
-
-                        maxY:
-                            maxValue == 0
-                                ? 100000
-                                : maxValue +
-                                    50000,
-
-                        alignment:
-                            BarChartAlignment
-                                .spaceAround,
-
-                        gridData:
-                            FlGridData(
-                          show: true,
-                        ),
-
-                        borderData:
-                            FlBorderData(
-                          show: false,
-                        ),
-
-                        titlesData:
-                            FlTitlesData(
-
-                          topTitles:
-                              AxisTitles(
-                            sideTitles:
-                                SideTitles(
-                              showTitles:
-                                  false,
-                            ),
-                          ),
-
-                          rightTitles:
-                              AxisTitles(
-                            sideTitles:
-                                SideTitles(
-                              showTitles:
-                                  false,
-                            ),
-                          ),
-
-                          // ================= FORMAT ANGKA =================
-                          leftTitles:
-                              AxisTitles(
-
-                            sideTitles:
-                                SideTitles(
-
-                              showTitles:
-                                  true,
-
-                              reservedSize:
-                                  55,
-
-                              getTitlesWidget:
-                                  (
-                                value,
-                                meta,
-                              ) {
-
-                                String text =
-                                    '';
-
-                                // MILIAR
-                                if (value >=
-                                    1000000000) {
-
-                                  text =
-                                      '${(value / 1000000000).toStringAsFixed(1)}M';
-                                }
-
-                                // JUTA
-                                else if (value >=
-                                    1000000) {
-
-                                  text =
-                                      '${(value / 1000000).toStringAsFixed(1)}JT';
-                                }
-
-                                // RIBU
-                                else if (value >=
-                                    1000) {
-
-                                  text =
-                                      '${(value / 1000).toStringAsFixed(0)}K';
-                                }
-
-                                // NORMAL
-                                else {
-
-                                  text = value
-                                      .toInt()
-                                      .toString();
-                                }
-
-                                return Text(
-
-                                  text,
-
-                                  style:
-                                      GoogleFonts
-                                          .montserrat(
-
-                                    fontSize:
-                                        10,
-
-                                    fontWeight:
-                                        FontWeight
-                                            .bold,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-
-                          bottomTitles:
-                              AxisTitles(
-
-                            sideTitles:
-                                SideTitles(
-
-                              showTitles:
-                                  true,
-
-                              getTitlesWidget:
-                                  (
-                                value,
-                                meta,
-                              ) {
-
-                                List<String>
-                                    weeks = [
-
-                                  "W1",
-                                  "W2",
-                                  "W3",
-                                  "W4",
-                                ];
-
-                                return Padding(
-
-                                  padding:
-                                      const EdgeInsets
-                                          .only(
-                                    top: 8,
-                                  ),
-
-                                  child: Text(
-
-                                    weeks[value
-                                        .toInt()],
-
-                                    style:
-                                        GoogleFonts
-                                            .montserrat(
-
-                                      fontWeight:
-                                          FontWeight
-                                              .bold,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-
-                        barGroups: [
-
-                          makeGroupData(
-                            0,
-                            weeklyIncome[
-                                0],
-                            weeklyExpense[
-                                0],
-                          ),
-
-                          makeGroupData(
-                            1,
-                            weeklyIncome[
-                                1],
-                            weeklyExpense[
-                                1],
-                          ),
-
-                          makeGroupData(
-                            2,
-                            weeklyIncome[
-                                2],
-                            weeklyExpense[
-                                2],
-                          ),
-
-                          makeGroupData(
-                            3,
-                            weeklyIncome[
-                                3],
-                            weeklyExpense[
-                                3],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+
+
+              const SizedBox(height:30),
+
+
+              Text(
+                'Grafik Mingguan',
+                style: GoogleFonts.montserrat(
+                  fontSize:20,
+                  fontWeight:FontWeight.bold,
+                ),
+              ),
+
+
+              SizedBox(
+                height:300,
+                child: BarChart(
+                  BarChartData(
+
+                    maxY: maxChartValue == 0
+                        ? 100000
+                        : maxChartValue + (maxChartValue * 0.2),
+
+                    barGroups:[
+                      for(int i = 0; i < 4; i++)
+
+                        BarChartGroupData(
+                          x:i,
+
+                          barRods:[
+
+                            BarChartRodData(
+                              toY: weeklyIncome[i],
+                              color: Colors.green,
+                              width:14,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+
+
+                            BarChartRodData(
+                              toY: weeklyExpense[i],
+                              color: Colors.red,
+                              width:14,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+
+                          ],
+                        )
+                    ],
+
+
+                    gridData: FlGridData(
+                      show:true,
+                    ),
+
+
+                    borderData: FlBorderData(
+                      show:false,
+                    ),
+
+
+                    titlesData: FlTitlesData(
+
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles:false,
+                        ),
+                      ),
+
+
+                      rightTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles:false,
+                        ),
+                      ),
+
+
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+
+                          showTitles:true,
+
+                          reservedSize:60,
+
+                          getTitlesWidget:(value, meta){
+
+                            String text;
+
+
+                            if(value >= 1000000){
+                              text =
+                              '${(value/1000000).toStringAsFixed(1)}JT';
+                            }
+
+                            else if(value >=1000){
+                              text =
+                              '${(value/1000).toStringAsFixed(0)}K';
+                            }
+
+                            else{
+                              text =
+                              value.toInt().toString();
+                            }
+
+
+                            return Text(
+                              text,
+                              style:GoogleFonts.montserrat(
+                                fontSize:10,
+                                fontWeight:FontWeight.bold,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+
+                          showTitles:true,
+
+                          getTitlesWidget:(value, meta){
+
+                            const weeks=[
+                              'W1',
+                              'W2',
+                              'W3',
+                              'W4',
+                            ];
+
+
+                            return Text(
+                              weeks[value.toInt()],
+                              style:GoogleFonts.montserrat(
+                                fontWeight:FontWeight.bold,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                    ),
+
+                  ),
+                ),
+              )
+
+            ],
           );
         },
       ),
     );
   }
 
-  // ================= BAR =================
-  BarChartGroupData makeGroupData(
-    int x,
-    double income,
-    double expense,
-  ) {
 
-    return BarChartGroupData(
 
-      x: x,
+  Widget _balanceCard(
+    int income,
+    int expense,
+    int balance,
+  ){
 
-      barsSpace: 6,
+    final money =
+        NumberFormat.currency(
+          locale:'id_ID',
+          symbol:'Rp ',
+          decimalDigits:0,
+        );
 
-      barRods: [
 
-        // PEMASUKAN
-        BarChartRodData(
+    return Container(
+      padding:const EdgeInsets.all(20),
+      decoration:BoxDecoration(
+        color:primary,
+        borderRadius:BorderRadius.circular(25),
+      ),
 
-          toY: income,
+      child:Column(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
 
-          width: 14,
+        children:[
 
-          color: Colors.green,
-
-          borderRadius:
-              BorderRadius.circular(
-            8,
+          Text(
+            'Keuangan Bulan Ini',
+            style:GoogleFonts.montserrat(
+              color:Colors.white,
+              fontSize:20,
+              fontWeight:FontWeight.bold,
+            ),
           ),
-        ),
 
-        // PENGELUARAN
-        BarChartRodData(
 
-          toY: expense,
+          const SizedBox(height:15),
 
-          width: 14,
 
-          color: Colors.red,
-
-          borderRadius:
-              BorderRadius.circular(
-            8,
+          Text(
+            'Saldo ${money.format(balance)}',
+            style:const TextStyle(
+              color:Colors.white,
+            ),
           ),
-        ),
-      ],
+
+
+          const SizedBox(height:20),
+
+
+          Row(
+            children:[
+
+              Expanded(
+                child:_moneyBox(
+                  'Masuk',
+                  income,
+                  Colors.green,
+                ),
+              ),
+
+
+              const SizedBox(width:10),
+
+
+              Expanded(
+                child:_moneyBox(
+                  'Keluar',
+                  expense,
+                  Colors.red,
+                ),
+              ),
+
+            ],
+          )
+
+        ],
+      ),
+    );
+  }
+
+
+
+  Widget _moneyBox(
+    String title,
+    int value,
+    Color color,
+  ){
+
+    final money =
+        NumberFormat.currency(
+          locale:'id_ID',
+          symbol:'Rp ',
+          decimalDigits:0,
+        );
+
+
+    return Container(
+      padding:const EdgeInsets.all(12),
+      decoration:BoxDecoration(
+        color:Colors.white24,
+        borderRadius:
+            BorderRadius.circular(15),
+      ),
+
+      child:Column(
+        children:[
+
+          Text(
+            title,
+            style:
+            const TextStyle(
+              color:Colors.white,
+            ),
+          ),
+
+          const SizedBox(height:8),
+
+          Text(
+            money.format(value),
+            style:TextStyle(
+              color:color,
+              fontWeight:FontWeight.bold,
+            ),
+          ),
+
+        ],
+      ),
     );
   }
 }

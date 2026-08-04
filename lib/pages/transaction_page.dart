@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,8 +7,10 @@ import 'package:intl/intl.dart';
 class TransactionPage extends StatefulWidget {
   // FIREBASE DOC ID
   final String? docId;
+  final user = FirebaseAuth.instance.currentUser;
+  final String userUid = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  const TransactionPage({
+   TransactionPage({
     super.key,
     this.docId,
   });
@@ -107,7 +110,11 @@ class _TransactionPageState extends State<TransactionPage> {
     try {
       final data = await buildTransactionData();
 
-      await firestore.collection('transactions').add(data);
+      await firestore
+      .collection('users')
+      .doc(widget.userUid)
+      .collection('transactions')
+      .add(data);
 
       showMessage('Transaction berhasil disimpan');
     } catch (e) {
@@ -123,7 +130,12 @@ class _TransactionPageState extends State<TransactionPage> {
     try {
       final data = await buildTransactionData(isUpdate: true);
 
-      await firestore.collection('transactions').doc(widget.docId).update(data);
+      await firestore
+      .collection('users')
+      .doc(widget.userUid)
+      .collection('transactions')
+      .doc(widget.docId)
+      .update(data);
 
       showMessage('Transaction berhasil diupdate');
     } catch (e) {
@@ -137,7 +149,12 @@ class _TransactionPageState extends State<TransactionPage> {
     if (widget.docId == null) return;
 
     try {
-      final doc = await firestore.collection('transactions').doc(widget.docId).get();
+      final doc = await firestore 
+      .collection('users')
+      .doc(widget.userUid)
+      .collection('transactions')
+      .doc(widget.docId)
+      .get();
 
       if (!doc.exists) return;
 
@@ -255,6 +272,8 @@ class _TransactionPageState extends State<TransactionPage> {
 
               StreamBuilder<QuerySnapshot>(
                 stream: firestore
+                    .collection('users')
+                    .doc(widget.userUid)
                     .collection('categories')
                     .where(
                       'type',
