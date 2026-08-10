@@ -156,7 +156,7 @@ class WelcomePage extends StatelessWidget {
                       child:
                           Image.asset(
 
-                        'assets/images/app_icon.png',
+                        'assets/icon/app_icon.png',
 
                         width:
                             80,
