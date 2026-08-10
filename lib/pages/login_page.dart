@@ -212,10 +212,12 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.account_balance_wallet_rounded,
-                    color: primaryColor,
-                    size: 46,
+                  child: Center(
+                    child: Image.asset(
+                      'assets/images/app_icon.png',
+                      width: 50,
+                      height: 50,
+                    ),
                   ),
                 ),
               ),

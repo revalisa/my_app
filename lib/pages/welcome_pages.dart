@@ -151,15 +151,20 @@ class WelcomePage extends StatelessWidget {
 
 
                     child:
-                        const Icon(
+                        Center(
 
-                      Icons.wallet_rounded,
+                      child:
+                          Image.asset(
 
-                      size:
-                          95,
+                        'assets/images/app_icon.png',
 
-                      color:
-                          primaryColor,
+                        width:
+                            80,
+
+                        height:
+                            80,
+
+                      ),
 
                     ),
 
