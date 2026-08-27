@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           Expanded(
             child: Text(
-              'Finance\nTracker',
+              'Finance  Tracker',
               style: GoogleFonts.montserrat(
                 fontSize: 21,
                 fontWeight: FontWeight.w600,
